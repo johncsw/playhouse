@@ -1,0 +1,31 @@
+services:
+  playhouse-ui:
+    build:
+      context: ./ui
+      dockerfile: conf/Dockerfile
+    ports:
+      - 1234:80
+    volumes:
+      - /Users/john/IdeaProjects/playhouse/ui/src:/usr/share/nginx/html/
+    networks:
+      - playhouse-net
+
+  playhouse-server:
+    build:
+      context: ./server
+      dockerfile: conf/Dockerfile
+    ports:
+      - 2345:2345
+    networks:
+      - playhouse-net
+
+  playhouse-db:
+    image: cockroachdb/cockroach
+    command: start-single-node --advertise-addr 'localhost' --insecure
+    ports:
+      - 3456:26257
+      - 34561:8080
+    networks:
+      - playhouse-net
+networks:
+  playhouse-net:
