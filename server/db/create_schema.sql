@@ -25,6 +25,7 @@ create table if not exists chunk(
         time_code int not null check( time_code > 0),
         size int not null check(size > 0),
         is_uploaded bool not null default false,
+        content bytes not null check (length(content) > 0),
         created_at timestamp not null default current_timestamp(),
         uploaded_at timestamp,
         video_id int not null references video(id) on delete cascade on update no action,
