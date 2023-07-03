@@ -20,7 +20,7 @@ func NewFactory() *Factory {
 
 	db, err := gorm.Open(postgres.New(driverConfig), &gorm.Config{})
 	if err != nil {
-		panic("Failed to connect to database")
+		panic(err)
 	}
 
 	f := &Factory{DB: db}

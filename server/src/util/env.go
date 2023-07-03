@@ -1,7 +1,6 @@
 package util
 
 import (
-	"errors"
 	"github.com/joho/godotenv"
 	"net/http"
 	"os"
@@ -10,8 +9,12 @@ import (
 )
 
 func LoadEnv() {
-	if err := godotenv.Load("../conf/.env"); err != nil {
-		panic(errors.New("error loading .env file"))
+	// export ENV_PATH manually if you're on local development
+	// env_local: ../conf/.env_local
+	// env_docker: ./conf/.env_docker
+	envPath := os.Getenv("ENV_PATH")
+	if err := godotenv.Load(envPath); err != nil {
+		panic(err)
 	}
 }
 

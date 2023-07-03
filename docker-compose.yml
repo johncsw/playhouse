@@ -22,6 +22,8 @@ services:
   playhouse-db:
     image: cockroachdb/cockroach
     command: start-single-node --advertise-addr 'localhost' --insecure
+    volumes:
+      - /Users/john/IdeaProjects/playhouse/server/db/data:/cockroach/cockroach-data
     ports:
       - 3456:26257
       - 34561:8080
