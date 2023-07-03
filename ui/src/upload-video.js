@@ -10,6 +10,7 @@ uploadButton.addEventListener('click', function() {
         uploadProgressText.textContent = 'Waiting...';
         fileInput.disabled = true;
         uploadButton.disabled = true;
+        initializeSession()
     } else {
         fileInfoText.style.color = 'red';
         fileInfoText.textContent = 'Please select a video';

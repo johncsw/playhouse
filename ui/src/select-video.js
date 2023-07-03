@@ -13,7 +13,7 @@ fileInput.addEventListener('change', function() {
         fileInfoText.textContent = `Name: ${fileName}\nSize: ${fileSize}\nType: ${fileType}`;
         uploadButton.disabled = false;
     } else {
-        uploadButton.disabled = true; // Disable the upload button
+        uploadButton.disabled = true;
     }
 });
 
