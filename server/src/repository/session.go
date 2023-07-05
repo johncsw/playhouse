@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"gorm.io/gorm"
 	"net/http"
 	"playhouse-server/model"
@@ -39,7 +40,22 @@ func (r *sessionrepo) IsSessionAvailable(ID int) bool {
 	if ID <= 0 {
 		return false
 	}
-	// todo: pending implementation
 
-	return true
+	var s model.Session
+
+	if err := r.db.Find(&s, ID).Error; err != nil {
+		code := http.StatusInternalServerError
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			code = http.StatusNotFound
+		}
+
+		panic(util.ResponseErr{
+			Code:    code,
+			ErrBody: err,
+		})
+	}
+
+	isNotDue := s.DueAt.After(time.Now().UTC())
+
+	return isNotDue && s.IsAvailable
 }

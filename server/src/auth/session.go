@@ -10,7 +10,7 @@ import (
 
 type JWTClaims struct {
 	jwt.RegisteredClaims
-	sessionID int
+	SessionID int `json:"sessionID"`
 }
 type SessionAuthenticator struct {
 	RepoFact *repository.Factory
@@ -36,13 +36,14 @@ func (a SessionAuthenticator) InitializeSession() string {
 	s := sessionRepo.NewSession()
 	sessionID := s.ID
 	claims := JWTClaims{
-		sessionID: sessionID,
+		SessionID:        sessionID,
+		RegisteredClaims: jwt.RegisteredClaims{},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	secret := []byte(a.Env.JWTSecret())
-	tokenStr, err := token.SignedString(secret)
+	secret := a.Env.JWTSecret()
+	tokenStr, err := token.SignedString([]byte(secret))
 	if err != nil {
 		panic(util.ResponseErr{
 			Code:    http.StatusInternalServerError,
@@ -56,13 +57,14 @@ func (a SessionAuthenticator) InitializeSession() string {
 func (a SessionAuthenticator) IsJWTValid(tokenStr string) bool {
 	authError := util.ResponseErr{
 		Code:    http.StatusForbidden,
-		ErrBody: errors.New("not a valid tokenStr"),
+		ErrBody: errors.New("not a valid token"),
 	}
 	if tokenStr == "" {
 		panic(authError)
 	}
 
 	secret := a.Env.JWTSecret()
+	// Parse the token
 	token, err := jwt.ParseWithClaims(tokenStr, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
@@ -76,7 +78,7 @@ func (a SessionAuthenticator) IsJWTValid(tokenStr string) bool {
 
 	if claims, ok := token.Claims.(*JWTClaims); ok && token.Valid {
 		sessionRepo := a.RepoFact.NewSessionRepo()
-		return sessionRepo.IsSessionAvailable(claims.sessionID)
+		return sessionRepo.IsSessionAvailable(claims.SessionID)
 	} else {
 		panic(authError)
 	}
