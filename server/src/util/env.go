@@ -4,11 +4,24 @@ import (
 	"github.com/joho/godotenv"
 	"net/http"
 	"os"
-	"playhouse-server/middleware"
 	"strconv"
 )
 
-func LoadEnv() {
+type Env struct {
+}
+
+var (
+	env *Env
+)
+
+func NewEnv() *Env {
+	if env == nil {
+		env = &Env{}
+	}
+	return env
+}
+
+func (Env) Load() {
 	// export ENV_PATH manually if you're on local development
 	// env_local: ../conf/.env_local
 	// env_docker: ./conf/.env_docker
@@ -18,10 +31,10 @@ func LoadEnv() {
 	}
 }
 
-func EnvGetSessionTTLHour() int {
+func (Env) SessionTTLHour() int {
 	sessionTTLHour, err := strconv.Atoi(os.Getenv("APP_SESSION_TTL_HOUR"))
 	if err != nil {
-		panic(middleware.ResponseErr{
+		panic(ResponseErr{
 			Code:    http.StatusInternalServerError,
 			ErrBody: err,
 		})
@@ -29,10 +42,10 @@ func EnvGetSessionTTLHour() int {
 	return sessionTTLHour
 }
 
-func EnvGetDSN() string {
+func (Env) DSN() string {
 	return os.Getenv("DB_DSN")
 }
 
-func EnvGetJWTSecret() string {
+func (Env) JWTSecret() string {
 	return os.Getenv("APP_JWT_SECRET")
 }

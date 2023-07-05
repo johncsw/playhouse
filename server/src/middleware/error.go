@@ -6,28 +6,20 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"playhouse-server/util"
 )
-
-type ResponseErr struct {
-	Code    int
-	ErrBody error
-}
-
-func (h ResponseErr) Error() string {
-	return h.ErrBody.Error()
-}
 
 func ErrorHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				var responseErr ResponseErr
+				var responseErr util.ResponseErr
 				switch e := err.(type) {
-				case ResponseErr:
+				case util.ResponseErr:
 					responseErr = e
 				default:
 					errMessage := fmt.Sprintf("Unknown Error: %v", err)
-					responseErr = ResponseErr{
+					responseErr = util.ResponseErr{
 						Code:    http.StatusInternalServerError,
 						ErrBody: errors.New(errMessage),
 					}

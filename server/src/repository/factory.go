@@ -8,32 +8,40 @@ import (
 	"playhouse-server/util"
 )
 
+var (
+	db *gorm.DB
+)
+
 type Factory struct {
-	DB *gorm.DB
+	db *gorm.DB
 }
 
 func NewFactory() *Factory {
-	driverConfig := postgres.Config{
-		DSN:                  util.EnvGetDSN(),
-		PreferSimpleProtocol: true,
+	if db == nil {
+		env := util.NewEnv()
+		driverConfig := postgres.Config{
+			DSN:                  env.DSN(),
+			PreferSimpleProtocol: true,
+		}
+
+		connection, err := gorm.Open(postgres.New(driverConfig), &gorm.Config{})
+		if err != nil {
+			panic(err)
+		}
+
+		result := connection.Raw("select 1;")
+		if result.Error != nil {
+			panic(fmt.Sprintf("Fail to connect to database: %v", result.Error))
+		} else {
+			log.Println("Database connection successful.")
+		}
+
+		db = connection
 	}
 
-	db, err := gorm.Open(postgres.New(driverConfig), &gorm.Config{})
-	if err != nil {
-		panic(err)
-	}
-
-	f := &Factory{DB: db}
-	result := f.DB.Raw("select 1;")
-	if result.Error != nil {
-		panic(fmt.Sprintf("Fail to connect to database: %v", result.Error))
-	} else {
-		log.Println("Database connection successful.")
-	}
-
-	return f
+	return &Factory{db: db}
 }
 
-func (f *Factory) NewSessionRepo() *SessionRepo {
-	return &SessionRepo{DB: f.DB}
+func (f *Factory) NewSessionRepo() *sessionrepo {
+	return &sessionrepo{db: f.db}
 }

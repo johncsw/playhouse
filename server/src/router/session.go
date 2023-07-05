@@ -3,27 +3,28 @@ package router
 import (
 	"github.com/go-chi/chi/v5"
 	"net/http"
-	"playhouse-server/repository"
+	"playhouse-server/auth"
 	"playhouse-server/util"
 )
 
-func NewSessionRouter(f *repository.Factory) *chi.Mux {
+func newSessionRouter() *chi.Mux {
+	authenticator := auth.NewSessionAuthenticator()
+	wrapper := util.NewWrapper()
+
 	r := chi.NewRouter()
 	r.Group(func(r chi.Router) {
-		r.Post("/", newSessionHandler(f))
+		r.Post("/", newSessionHandler(authenticator, wrapper))
 	})
 	return r
 }
 
-func newSessionHandler(f *repository.Factory) http.HandlerFunc {
-	repo := f.NewSessionRepo()
+func newSessionHandler(authenticator *auth.SessionAuthenticator, wrapper *util.Wrapper) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		s := repo.NewSession()
-		token := util.GenJWT(s.ID, s.DueAt)
+		token := authenticator.InitializeSession()
 		headers := map[string]string{
 			"Authorization": token,
 		}
-		util.ReturnSuccess(nil, headers, w)
+		wrapper.SuccessfulResponse(nil, headers, w)
 	}
 }
