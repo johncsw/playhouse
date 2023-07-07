@@ -49,3 +49,7 @@ func (Env) DSN() string {
 func (Env) JWTSecret() string {
 	return os.Getenv("APP_JWT_SECRET")
 }
+
+func (Env) CORS_ALLOWED_WEBSITE() string {
+	return os.Getenv("CORS_ALLOWED_WEBSITE")
+}

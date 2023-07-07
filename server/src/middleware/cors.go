@@ -1,18 +1,21 @@
 package middleware
 
 import (
+	"github.com/go-chi/cors"
 	"net/http"
-	"os"
+	"playhouse-server/util"
 )
 
 // This might not needed when we use server-side randering front-end framework
 func CORSHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		webSiteAllowed := os.Getenv("CORS_WEBSITE_ALLOWED")
-		w.Header().Set("Access-Control-Allow-Origin", webSiteAllowed)
-		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE, HEAD")
-		w.Header().Set("Access-Control-Expose-Headers", "Authorization")
-		next.ServeHTTP(w, r)
+	cors := cors.New(cors.Options{
+		AllowedOrigins:   []string{util.Env{}.CORS_ALLOWED_WEBSITE()}, // Use your client's url here
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	})
+
+	return cors.Handler(next)
 }
