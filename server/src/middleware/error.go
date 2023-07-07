@@ -23,14 +23,14 @@ func ErrorHandler(next http.Handler) http.Handler {
 						Code:    http.StatusInternalServerError,
 						ErrBody: errors.New(errMessage),
 					}
-					log.Fatalf(errMessage)
 				}
+
+				log.Print(responseErr.ErrBody.Error())
 
 				w.WriteHeader(responseErr.Code)
 				err := json.NewEncoder(w).Encode(map[string]string{"error": responseErr.Error()})
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
-					log.Fatalf(err.Error())
 				}
 			}
 		}()

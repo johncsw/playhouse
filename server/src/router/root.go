@@ -14,5 +14,6 @@ func NewRootRouter() *chi.Mux {
 	r.Use(ourMiddleware.CORSHandler)
 	r.Use(chiMiddleware.Logger)
 	r.Mount("/session", newSessionRouter())
+	r.Mount("/upload", newUploadRouter())
 	return r
 }

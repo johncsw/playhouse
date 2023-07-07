@@ -12,7 +12,7 @@ create table if not exists session(
 create table if not exists video(
     id serial primary key,
     name string not null check (length(name) > 0),
-    type string not null check (length(name) > 0),
+    type string not null check (length(type) > 0),
     size int not null check(size > 0),
     url_to_stream string,
     pending_chunks int4 not null default 0,
@@ -25,9 +25,9 @@ create table if not exists video(
 
 create table if not exists chunk(
         code int not null check( code >= 0),
-        size int not null check(size > 0),
+        size int not null default 0 check ( size >= 0),
         is_uploaded bool not null default false,
-        content bytes not null check (length(content) > 0),
+        content bytes,
         created_at timestamp not null default current_timestamp(),
         uploaded_at timestamp,
         video_id int not null references video(id) on delete cascade on update no action,

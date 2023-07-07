@@ -85,3 +85,38 @@ func (a SessionAuthenticator) IsJWTValid(tokenStr string) bool {
 
 	return false
 }
+
+func (a SessionAuthenticator) getClaims(tokenStr string) *JWTClaims {
+	authError := util.ResponseErr{
+		Code:    http.StatusForbidden,
+		ErrBody: errors.New("not a valid token"),
+	}
+	if tokenStr == "" {
+		panic(authError)
+	}
+
+	secret := a.Env.JWTSecret()
+	// Parse the token
+	token, err := jwt.ParseWithClaims(tokenStr, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
+
+	if err != nil {
+		panic(util.ResponseErr{
+			Code:    http.StatusInternalServerError,
+			ErrBody: err,
+		})
+	}
+
+	if claims, ok := token.Claims.(*JWTClaims); ok && token.Valid {
+		return claims
+	} else {
+		panic(authError)
+	}
+}
+
+func (a *SessionAuthenticator) GetSessionId(r *http.Request) int {
+	tokenStr := r.Header.Get("Authorization")
+	claims := a.getClaims(tokenStr)
+	return claims.SessionID
+}

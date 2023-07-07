@@ -43,15 +43,15 @@ func (r *sessionrepo) IsSessionAvailable(ID int) bool {
 
 	var s model.Session
 
-	if err := r.db.Find(&s, ID).Error; err != nil {
+	if err := r.db.First(&s, ID).Error; err != nil {
 		code := http.StatusInternalServerError
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			code = http.StatusNotFound
+			code = http.StatusForbidden
 		}
 
 		panic(util.ResponseErr{
 			Code:    code,
-			ErrBody: err,
+			ErrBody: errors.New("session not found"),
 		})
 	}
 

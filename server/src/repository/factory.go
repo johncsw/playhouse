@@ -42,6 +42,18 @@ func NewFactory() *Factory {
 	return &Factory{db: db}
 }
 
+func (f *Factory) NewTransaction() transaction {
+	return transaction{db: f.db}
+}
+
 func (f *Factory) NewSessionRepo() *sessionrepo {
 	return &sessionrepo{db: f.db}
+}
+
+func (f *Factory) NewVideoRepo() *videorepo {
+	return &videorepo{db: f.db}
+}
+
+func (f *Factory) NewChunkRepo() *chunkrepo {
+	return &chunkrepo{db: f.db}
 }
