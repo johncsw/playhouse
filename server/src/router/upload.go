@@ -117,8 +117,9 @@ func UploadRegistrationHandler(
 		}
 
 		wrapper := responsebody.Wrapper{Writer: w}
+		videoID := strconv.Itoa(newVideo.ID)
 		wrapper.Status(http.StatusOK).JsonBodyFromMap(map[string]any{
-			"videoID": newVideo.ID,
+			"videoID": videoID,
 		})
 	}
 }

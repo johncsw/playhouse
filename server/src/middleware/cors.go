@@ -12,7 +12,7 @@ func CORSHandler(next http.Handler) http.Handler {
 		AllowedOrigins:   []string{util.Env{}.CORS_ALLOWED_WEBSITE()}, // Use your client's url here
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
+		ExposedHeaders:   []string{"Authorization"},
 		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	})
