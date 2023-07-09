@@ -34,3 +34,9 @@ func (r *videorepo) NewVideo(b *requestbody.UploadRegistrationBody, sessionID in
 
 	return v, err
 }
+
+func (r *videorepo) GetVideoSize(id int) (int, error) {
+	var v model.Video
+	err := r.db.Select("size").First(&v, id).Error
+	return v.Size, err
+}

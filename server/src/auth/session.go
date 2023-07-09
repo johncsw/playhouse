@@ -36,8 +36,7 @@ func (a SessionAuthenticator) InitializeSession() string {
 	s := sessionRepo.NewSession()
 	sessionID := s.ID
 	claims := JWTClaims{
-		SessionID:        sessionID,
-		RegisteredClaims: jwt.RegisteredClaims{},
+		SessionID: sessionID,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
