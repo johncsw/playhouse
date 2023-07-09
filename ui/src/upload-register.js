@@ -20,7 +20,6 @@ function getVideoIDByUploadRegistration(file, sessionToken, updatePageUploadFail
         }
     }).then(data => {
         let videoID = data.videoID;
-        console.log(videoID);
         return videoID;
     }).catch(error => {
         updatePageUploadFailure();

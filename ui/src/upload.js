@@ -1,4 +1,4 @@
-uploadButton.addEventListener('click', function () {
+uploadButton.addEventListener('click', async function () {
     const fileInput = document.getElementById('fileInput');
     const fileInfoText = document.getElementById('fileInfo');
     const uploadButton = document.getElementById('uploadButton');
@@ -11,18 +11,23 @@ uploadButton.addEventListener('click', function () {
         fileInput.disabled = true;
         uploadButton.disabled = true;
 
-        const sessionToken = config.SESSION_TOKEN
+        let sessionToken = config.SESSION_TOKEN
         if (!sessionToken) {
-            initializeSession(updatePageUploadFailure)
+            sessionToken = await initializeSession(updatePageUploadFailure)
         }
+
         let videoID = config.UPLOADING_VIDEO_ID
         if (!videoID) {
-            getVideoIDByUploadRegistration(selectedFile, sessionToken, updatePageUploadFailure)
-                .then(value => {
-                    videoID = value
-                    localStorage.setItem(config.UPLOADING_VIDEO_ID_KEY, videoID)
-                }).catch(updatePageUploadFailure);
+            videoID = await getVideoIDByUploadRegistration(selectedFile, sessionToken, updatePageUploadFailure)
+            localStorage.setItem(config.UPLOADING_VIDEO_ID_KEY, videoID)
         }
+
+        const {chunkCodes, maxChunkSize}  = await getChunkCodesAndMaxChunkSize(videoID,  updatePageUploadFailure, sessionToken);
+
+        if (chunkCodes != null && maxChunkSize != null) {
+            console.log(chunkCodes, maxChunkSize)
+        }
+
     } else {
         fileInfoText.style.color = 'red';
         fileInfoText.textContent = 'Please select a video';
