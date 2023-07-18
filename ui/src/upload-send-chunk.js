@@ -25,6 +25,10 @@ function sendChunks(videoID, videoFile, chunkCodes, chunkMaxSize, sessionToken) 
         if (result.status === "success") {
             updateUploadProgress(videoFile.size, uploadedSizeOfData += result.size)
         }
+        if (result.status === "failed") {
+            updateUploadStatusToFailed();
+        }
+
         // todo: if partial upload of chunk failed, update page accordingly
         // todo: if all uploads succeed, update page accordingly, and redirect to the video page
     };
@@ -43,5 +47,13 @@ function updateUploadProgress(totalSize, uploadedSize) {
     const uploadProgress = document.getElementById('uploadProgress');
     const uploadPercentage = Math.round(uploadedSize / totalSize * 100);
     uploadProgress.innerHTML = `${uploadPercentage}% Uploaded`;
+}
+
+function updateUploadStatusToFailed() {
+    const uploadStatus = document.getElementById('uploadStatus');
+    const uploadProgress = document.getElementById('uploadProgress');
+    uploadProgress.style.display = 'none';
+    uploadStatus.innerHTML = 'Upload Failed. Please refresh page and try again.'
+    uploadStatus.style.color = 'red';
 }
 
