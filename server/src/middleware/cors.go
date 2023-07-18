@@ -6,10 +6,10 @@ import (
 	"playhouse-server/util"
 )
 
-// This might not needed when we use server-side randering front-end framework
+// This might not needed when we use server-side rendering front-end framework
 func CORSHandler(next http.Handler) http.Handler {
 	cors := cors.New(cors.Options{
-		AllowedOrigins:   []string{util.Env{}.CORS_ALLOWED_WEBSITE()}, // Use your client's url here
+		AllowedOrigins:   []string{util.NewEnv().CORS_ALLOWED_WEBSITE()}, // Use your client's url here
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Authorization"},

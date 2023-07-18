@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"playhouse-server/util"
+	"playhouse-server/responsebody"
 )
 
 type RequestBody interface {
-	UploadRegistrationBody
+	UploadRegistrationBody | UploadChunkBody
 }
 
 type UnCheckedRequestBody interface {
@@ -20,7 +20,7 @@ func ToRequestBody[T RequestBody](b *T, r *http.Request) {
 	defer func(bodyStreamer io.ReadCloser) {
 		err := bodyStreamer.Close()
 		if err != nil {
-			panic(util.ResponseErr{
+			panic(responsebody.ResponseErr{
 				Code:    http.StatusInternalServerError,
 				ErrBody: err,
 			})
@@ -30,7 +30,7 @@ func ToRequestBody[T RequestBody](b *T, r *http.Request) {
 	decoder := json.NewDecoder(bodyStreamer)
 
 	if err := decoder.Decode(b); err != nil {
-		panic(util.ResponseErr{
+		panic(responsebody.ResponseErr{
 			Code:    http.StatusInternalServerError,
 			ErrBody: err,
 		})

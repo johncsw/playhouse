@@ -5,6 +5,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"playhouse-server/repository"
+	"playhouse-server/responsebody"
 	"playhouse-server/util"
 )
 
@@ -41,10 +42,10 @@ func (a SessionAuthenticator) InitializeSession() string {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	secret := a.Env.JWTSecret()
+	secret := a.Env.JWT_SECRET()
 	tokenStr, err := token.SignedString([]byte(secret))
 	if err != nil {
-		panic(util.ResponseErr{
+		panic(responsebody.ResponseErr{
 			Code:    http.StatusInternalServerError,
 			ErrBody: err,
 		})
@@ -54,7 +55,7 @@ func (a SessionAuthenticator) InitializeSession() string {
 }
 
 func (a SessionAuthenticator) IsJWTValid(tokenStr string) bool {
-	authError := util.ResponseErr{
+	authError := responsebody.ResponseErr{
 		Code:    http.StatusForbidden,
 		ErrBody: errors.New("not a valid token"),
 	}
@@ -62,14 +63,14 @@ func (a SessionAuthenticator) IsJWTValid(tokenStr string) bool {
 		panic(authError)
 	}
 
-	secret := a.Env.JWTSecret()
+	secret := a.Env.JWT_SECRET()
 	// Parse the token
 	token, err := jwt.ParseWithClaims(tokenStr, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
 
 	if err != nil {
-		panic(util.ResponseErr{
+		panic(responsebody.ResponseErr{
 			Code:    http.StatusInternalServerError,
 			ErrBody: err,
 		})
@@ -86,7 +87,7 @@ func (a SessionAuthenticator) IsJWTValid(tokenStr string) bool {
 }
 
 func (a SessionAuthenticator) getClaims(tokenStr string) *JWTClaims {
-	authError := util.ResponseErr{
+	authError := responsebody.ResponseErr{
 		Code:    http.StatusForbidden,
 		ErrBody: errors.New("not a valid token"),
 	}
@@ -94,14 +95,14 @@ func (a SessionAuthenticator) getClaims(tokenStr string) *JWTClaims {
 		panic(authError)
 	}
 
-	secret := a.Env.JWTSecret()
+	secret := a.Env.JWT_SECRET()
 	// Parse the token
 	token, err := jwt.ParseWithClaims(tokenStr, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
 
 	if err != nil {
-		panic(util.ResponseErr{
+		panic(responsebody.ResponseErr{
 			Code:    http.StatusInternalServerError,
 			ErrBody: err,
 		})
@@ -116,6 +117,10 @@ func (a SessionAuthenticator) getClaims(tokenStr string) *JWTClaims {
 
 func (a *SessionAuthenticator) GetSessionId(r *http.Request) int {
 	tokenStr := r.Header.Get("Authorization")
+	if tokenStr == "" {
+		tokenStr = r.URL.Query().Get("token")
+	}
+
 	claims := a.getClaims(tokenStr)
 	return claims.SessionID
 }

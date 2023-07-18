@@ -3,7 +3,6 @@ package responsebody
 import (
 	"encoding/json"
 	"net/http"
-	"playhouse-server/util"
 )
 
 type Wrapper struct {
@@ -13,7 +12,7 @@ type Wrapper struct {
 func (builder *Wrapper) RawBody(body []byte) {
 	_, err := builder.Writer.Write(body)
 	if err != nil {
-		panic(util.ResponseErr{
+		panic(ResponseErr{
 			Code:    http.StatusInternalServerError,
 			ErrBody: err,
 		})
@@ -23,7 +22,7 @@ func (builder *Wrapper) RawBody(body []byte) {
 func (builder *Wrapper) JsonBodyFromMap(body map[string]any) {
 	jsonData, err := json.Marshal(body)
 	if err != nil {
-		panic(util.ResponseErr{
+		panic(ResponseErr{
 			Code:    http.StatusInternalServerError,
 			ErrBody: err,
 		})

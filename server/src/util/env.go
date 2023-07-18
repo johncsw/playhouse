@@ -4,6 +4,7 @@ import (
 	"github.com/joho/godotenv"
 	"net/http"
 	"os"
+	"playhouse-server/responsebody"
 	"strconv"
 )
 
@@ -31,10 +32,10 @@ func (Env) Load() {
 	}
 }
 
-func (Env) SessionTTLHour() int {
+func (Env) SESSION_TTL_HOUR() int {
 	sessionTTLHour, err := strconv.Atoi(os.Getenv("APP_SESSION_TTL_HOUR"))
 	if err != nil {
-		panic(ResponseErr{
+		panic(responsebody.ResponseErr{
 			Code:    http.StatusInternalServerError,
 			ErrBody: err,
 		})
@@ -46,10 +47,14 @@ func (Env) DSN() string {
 	return os.Getenv("DB_DSN")
 }
 
-func (Env) JWTSecret() string {
+func (Env) JWT_SECRET() string {
 	return os.Getenv("APP_JWT_SECRET")
 }
 
 func (Env) CORS_ALLOWED_WEBSITE() string {
 	return os.Getenv("CORS_ALLOWED_WEBSITE")
+}
+
+func (Env) CHUNK_STORAGE_PATH() string {
+	return os.Getenv("CHUNK_STORAGE_PATH")
 }

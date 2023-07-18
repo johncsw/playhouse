@@ -1,4 +1,4 @@
-package util
+package responsebody
 
 type ResponseErr struct {
 	Code    int

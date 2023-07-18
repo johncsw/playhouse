@@ -6,7 +6,6 @@ type Chunk struct {
 	Code       int
 	Size       int
 	IsUploaded bool
-	Content    []byte
 	CreatedAt  *time.Time
 	UploadedAt *time.Time
 	VideoID    int

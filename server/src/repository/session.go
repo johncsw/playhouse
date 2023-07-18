@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"playhouse-server/model"
+	"playhouse-server/responsebody"
 	"playhouse-server/util"
 	"time"
 )
@@ -16,7 +17,7 @@ type sessionrepo struct {
 func (r *sessionrepo) NewSession() *model.Session {
 	now := time.Now().UTC()
 	env := util.NewEnv()
-	sessionTTLHour := env.SessionTTLHour()
+	sessionTTLHour := env.SESSION_TTL_HOUR()
 	due := now.Add(time.Hour * time.Duration(sessionTTLHour))
 
 	s := &model.Session{
@@ -27,7 +28,7 @@ func (r *sessionrepo) NewSession() *model.Session {
 	result := r.db.Create(s)
 
 	if err := result.Error; err != nil {
-		panic(util.ResponseErr{
+		panic(responsebody.ResponseErr{
 			Code:    http.StatusInternalServerError,
 			ErrBody: err,
 		})
@@ -49,7 +50,7 @@ func (r *sessionrepo) IsSessionAvailable(ID int) bool {
 			code = http.StatusForbidden
 		}
 
-		panic(util.ResponseErr{
+		panic(responsebody.ResponseErr{
 			Code:    code,
 			ErrBody: errors.New("session not found"),
 		})
