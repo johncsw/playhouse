@@ -13,19 +13,18 @@ uploadButton.addEventListener('click', async function () {
 
         let sessionToken = config.SESSION_TOKEN
         if (!sessionToken) {
-            sessionToken = await initializeSession(updatePageUploadFailure)
+            sessionToken = await initializeSession(updatePageForUploadFailure)
         }
-
         let videoID = config.UPLOADING_VIDEO_ID
         if (!videoID) {
-            videoID = await getVideoIDByUploadRegistration(selectedFile, sessionToken, updatePageUploadFailure)
+            videoID = await getVideoIDByUploadRegistration(selectedFile, sessionToken, updatePageForUploadFailure)
             localStorage.setItem(config.UPLOADING_VIDEO_ID_KEY, videoID)
         }
 
-        const {chunkCodes, maxChunkSize}  = await getChunkCodesAndMaxChunkSize(videoID,  updatePageUploadFailure, sessionToken);
+        const {chunkCodes, maxChunkSize}  = await getChunkCodesAndMaxChunkSize(videoID,  updatePageForUploadFailure, sessionToken);
 
         if (chunkCodes != null && maxChunkSize != null) {
-            console.log(chunkCodes, maxChunkSize)
+            sendChunks(videoID, selectedFile, chunkCodes, maxChunkSize, sessionToken);
         }
 
     } else {
@@ -34,7 +33,7 @@ uploadButton.addEventListener('click', async function () {
     }
 });
 
-function updatePageUploadFailure() {
+function updatePageForUploadFailure() {
     const fileInput = document.getElementById('fileInput');
     const uploadButton = document.getElementById('uploadButton');
     const uploadStatus = document.getElementById('uploadStatus');

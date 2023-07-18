@@ -6,7 +6,6 @@ function initializeSession(updatePageWhenFailed) {
         if (!response.ok) {
             updatePageWhenFailed()
         }
-        console.log(response)
         const sessionToken = response.headers.get('Authorization');
         localStorage.setItem(config.SESSION_TOKEN_KEY, sessionToken);
         return sessionToken;
