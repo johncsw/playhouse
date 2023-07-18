@@ -29,8 +29,9 @@ function sendChunks(videoID, videoFile, chunkCodes, chunkMaxSize, sessionToken) 
             updateUploadStatusToFailed();
         }
 
-        // todo: if partial upload of chunk failed, update page accordingly
-        // todo: if all uploads succeed, update page accordingly, and redirect to the video page
+        if (result.status === "completed") {
+            updateUploadStatusToCompleted()
+        }
     };
 
     socket.onerror = function(error) {
@@ -55,5 +56,13 @@ function updateUploadStatusToFailed() {
     uploadProgress.style.display = 'none';
     uploadStatus.innerHTML = 'Upload Failed. Please refresh page and try again.'
     uploadStatus.style.color = 'red';
+}
+
+function updateUploadStatusToCompleted() {
+    const uploadStatus = document.getElementById('uploadStatus');
+    const uploadProgress = document.getElementById('uploadProgress');
+    uploadProgress.style.display = 'none';
+    uploadStatus.innerHTML = 'Upload Completed! Redirecting to video page...'
+    uploadStatus.style.color = 'green';
 }
 
