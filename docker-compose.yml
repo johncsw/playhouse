@@ -24,6 +24,7 @@ services:
       playhouse-db:
         condition: service_healthy
 
+
   playhouse-db:
     image: cockroachdb/cockroach
     command: start-single-node --advertise-addr 'localhost' --insecure
@@ -34,6 +35,7 @@ services:
       - 34561:8080
     networks:
       - playhouse-net
+
     healthcheck:
       test: [ "CMD", "cockroach", "sql", "--insecure", "-e", "SELECT 1" ]
       interval: 30s
