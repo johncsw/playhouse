@@ -16,16 +16,30 @@ services:
       dockerfile: conf/Dockerfile
     ports:
       - 2345:2345
+    volumes:
+      - /Users/john/IdeaProjects/playhouse/server/db/chunks:/app/chunks
     networks:
       - playhouse-net
+    depends_on:
+      playhouse-db:
+        condition: service_healthy
+
 
   playhouse-db:
     image: cockroachdb/cockroach
     command: start-single-node --advertise-addr 'localhost' --insecure
+    volumes:
+      - /Users/john/IdeaProjects/playhouse/server/db/data:/cockroach/cockroach-data
     ports:
       - 3456:26257
       - 34561:8080
     networks:
       - playhouse-net
+
+    healthcheck:
+      test: [ "CMD", "cockroach", "sql", "--insecure", "-e", "SELECT 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 networks:
   playhouse-net:
