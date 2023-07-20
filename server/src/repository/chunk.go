@@ -39,9 +39,9 @@ func (r *chunkrepo) NewChunks(v *model.Video, tx *gorm.DB) error {
 	return nil
 }
 
-func (r *chunkrepo) GetUnUploadedChunkCode(videoID int, sessionID int) ([]int, error) {
+func (r *chunkrepo) GetChunkCodeByIsUploaded(videoID int, isUploaded bool) ([]int, error) {
 	var chunks []model.Chunk
-	err := r.db.Select("code").Where("video_id = ? AND session_id = ? AND is_uploaded = false", videoID, sessionID).Find(&chunks).Error
+	err := r.db.Select("code").Where("video_id = ? AND is_uploaded = ?", videoID, isUploaded).Find(&chunks).Error
 	codes := make([]int, len(chunks))
 	for i, c := range chunks {
 		codes[i] = c.Code

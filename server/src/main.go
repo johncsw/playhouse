@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	env := util.NewEnv()
 	env.Load()
 	r := router.NewRootRouter()

@@ -91,7 +91,6 @@ func UploadRegistrationHandler(
 
 func GetChunkCodeHandler(repoFact *repository.Factory, authenticator *auth.SessionAuthenticator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		sessionID := authenticator.GetSessionId(r)
 		videoID, convErr := strconv.Atoi(r.URL.Query().Get("video-id"))
 		if convErr != nil {
 			panic(responsebody.ResponseErr{
@@ -117,7 +116,7 @@ func GetChunkCodeHandler(repoFact *repository.Factory, authenticator *auth.Sessi
 		maxChunkSize := util.MaxChunkSize(videoSize)
 
 		chunkRepo := repoFact.NewChunkRepo()
-		codes, dbErr := chunkRepo.GetUnUploadedChunkCode(videoID, sessionID)
+		codes, dbErr := chunkRepo.GetChunkCodeByIsUploaded(videoID, false)
 		if dbErr != nil {
 			panic(responsebody.ResponseErr{
 				Code:    http.StatusInternalServerError,
