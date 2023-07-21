@@ -101,3 +101,15 @@ func (r *videorepo) SetVideoURLToStream(videoID int, url string) error {
 
 	return nil
 }
+
+func (r *videorepo) IsVideoReadyToTranscode(videoID int) (string, error) {
+	var v model.Video
+	err := r.db.Model(&model.Video{}).Select("url_to_stream").Where("id = ? AND is_deleted = false AND is_transcoded=false AND type='video/mp4' AND length(url_to_stream) > 0 AND pending_chunks = 0", videoID).First(&v).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return v.URLToStream, nil
+}
