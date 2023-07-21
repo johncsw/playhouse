@@ -64,7 +64,10 @@ func (p *UploadChunkProcessor) postProcess() error {
 	}
 
 	if pendingChunks == 0 {
-		// todo: start transcoding
+		go func() {
+			p := TranscodeVideoProcessor{videoID: p.VideoID, repoFact: p.RepoFact}
+			p.Process()
+		}()
 	}
 
 	return nil
@@ -139,7 +142,7 @@ func (p *UploadChunkProcessor) setUpResultPipe(
 	go func() {
 		defer func() {
 			util.LogError(p.WSConn.Close(), "")
-			log.Printf("Stop saving chunks. videoID=%v sessionID=%v elapsed=%v", p.VideoID, p.SessionID, time.Since(start))
+			log.Printf("Finished saving chunks. videoID=%v sessionID=%v elapsed=%v", p.VideoID, p.SessionID, time.Since(start))
 			close(quit)
 		}()
 

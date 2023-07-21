@@ -58,3 +58,7 @@ func (Env) CORS_ALLOWED_WEBSITE() string {
 func (Env) CHUNK_STORAGE_PATH() string {
 	return os.Getenv("CHUNK_STORAGE_PATH")
 }
+
+func (Env) SHELL_PATH() string {
+	return os.Getenv("SHELL_PATH")
+}

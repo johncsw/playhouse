@@ -1,17 +1,25 @@
 package processor
 
 import (
+	"bufio"
 	"fmt"
 	"io"
+	"log"
 	"os"
+	"os/exec"
 	"playhouse-server/repository"
 	"playhouse-server/util"
+	"strings"
+	"time"
 )
 
 type TranscodeVideoProcessor struct {
 	repoFact *repository.Factory
 	videoID  int
 }
+
+const transcodingCommand = "ffmpeg -i %s %s"
+
 type checkVideoAndChunkOutput struct {
 	passCheck  bool
 	videoPath  string
@@ -24,16 +32,13 @@ type assembleChunksOutput struct {
 	err       error
 }
 
+type transcodeVideoOutput struct {
+	err error
+}
+
 func (p *TranscodeVideoProcessor) Process() {
-	// 1. get and check metadata of the video and its chunks
-	//		- input: videoID
-	//		- output: videoID & chunkCodes
-	// 2. open a .mp4 video file and write chunks to it
-	//		- input: videoID & chunkCodes
-	//		- output: path of the .mp4 file
-	// 3. call FFmpeg to transcode the video and do error handling
-	//		- intput: path of the .mp4 file
-	//		- output: result of transcoding
+	start := time.Now()
+	log.Printf("Start transcoding videoID=%d\n", p.videoID)
 	checkOutput := p.checkVideoAndChunks()
 	didNotPass := !checkOutput.passCheck
 	if didNotPass {
@@ -49,6 +54,12 @@ func (p *TranscodeVideoProcessor) Process() {
 		return
 	}
 
+	transcodeOutput := p.transcodeVideo(&assembleOutput)
+	if transcodeOutput.err != nil {
+		util.LogError(transcodeOutput.err, "")
+	}
+
+	log.Printf("Finished transcoding video. videoID=%d elapsed=%v\n ", p.videoID, time.Since(start))
 }
 
 func (p *TranscodeVideoProcessor) checkVideoAndChunks() checkVideoAndChunkOutput {
@@ -121,6 +132,27 @@ func (p *TranscodeVideoProcessor) assembleChunks(input *checkVideoAndChunkOutput
 	}
 
 	output.videoPath = outputPath
+
+	return output
+}
+
+func (p *TranscodeVideoProcessor) transcodeVideo(input *assembleChunksOutput) transcodeVideoOutput {
+	output := transcodeVideoOutput{}
+
+	outputPath := strings.Replace(input.videoPath, ".mp4", ".mpd", 1)
+	cmdStr := fmt.Sprintf(transcodingCommand, input.videoPath, outputPath)
+	cmd := exec.Command(util.NewEnv().SHELL_PATH(), "-c", cmdStr)
+
+	stderr, _ := cmd.StderrPipe()
+	if cmdErr := cmd.Start(); cmdErr != nil {
+		output.err = cmdErr
+		return output
+	}
+
+	scanner := bufio.NewScanner(stderr)
+	for scanner.Scan() {
+		log.Printf("transcoding video %d: %s\n", p.videoID, scanner.Text())
+	}
 
 	return output
 }
