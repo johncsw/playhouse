@@ -16,3 +16,7 @@ body {
     min-width: 300px;
     min-height: 200px;
 }
+
+#errorMessage {
+    text-align: center;
+}
