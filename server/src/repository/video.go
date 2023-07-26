@@ -139,3 +139,9 @@ func (r *videorepo) UpdateVideoAsTranscoded(videoID int) error {
 
 	return nil
 }
+
+func (r *videorepo) GetAllUploadedVideo(sessionID int) ([]model.Video, error) {
+	var videos []model.Video
+	result := r.db.Model(&model.Video{}).Select("id", "name").Where("session_id = ? AND is_deleted = false AND pending_chunks = 0", sessionID).Find(&videos)
+	return videos, result.Error
+}

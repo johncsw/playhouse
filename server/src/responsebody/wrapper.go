@@ -32,6 +32,19 @@ func (builder *Wrapper) JsonBodyFromMap(body map[string]any) {
 	builder.RawBody(jsonData)
 }
 
+func (builder *Wrapper) JsonListBodyFromMap(body []map[string]any) {
+	jsonData, err := json.Marshal(body)
+	if err != nil {
+		panic(ResponseErr{
+			Code:    http.StatusInternalServerError,
+			ErrBody: err,
+		})
+	}
+
+	builder.Writer.Header().Set("Content-Type", "application/json")
+	builder.RawBody(jsonData)
+}
+
 func (builder *Wrapper) Status(code int) *Wrapper {
 	builder.Writer.WriteHeader(code)
 	return builder
