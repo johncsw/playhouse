@@ -57,6 +57,12 @@ func (p *TranscodeVideoProcessor) Process() {
 	transcodeOutput := p.transcodeVideo(&assembleOutput)
 	if transcodeOutput.err != nil {
 		util.LogError(transcodeOutput.err, "")
+		return
+	}
+
+	markErr := p.markVideoAsTranscoded()
+	if markErr != nil {
+		util.LogError(markErr, "")
 	}
 
 	log.Printf("Finished transcoding video. videoID=%d elapsed=%v\n ", p.videoID, time.Since(start))
@@ -155,4 +161,8 @@ func (p *TranscodeVideoProcessor) transcodeVideo(input *assembleChunksOutput) tr
 	}
 
 	return output
+}
+
+func (p *TranscodeVideoProcessor) markVideoAsTranscoded() error {
+	return p.repoFact.NewVideoRepo().UpdateVideoAsTranscoded(p.videoID)
 }

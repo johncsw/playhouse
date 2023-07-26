@@ -24,6 +24,6 @@ func newSessionHandler(authenticator *auth.SessionAuthenticator) http.HandlerFun
 		wrapper := responsebody.Wrapper{Writer: w}
 		wrapper.Header(map[string]string{
 			"Authorization": token,
-		}).Status(http.StatusOK).RawBody(nil)
+		}).Status(http.StatusCreated).RawBody(nil)
 	}
 }

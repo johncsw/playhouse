@@ -34,7 +34,7 @@ func newUploadRouter() *chi.Mux {
 
 	r.Group(func(r chi.Router) {
 		r.Post("/register", UploadRegistrationHandler(repoFact, authenticator))
-		r.Get("/chunk-code", GetChunkCodeHandler(repoFact, authenticator))
+		r.Get("/chunk-code", GetChunkCodeHandler(repoFact))
 		r.Get("/chunks", ChunkUploadHandler(repoFact, authenticator, webSocketUpgrader))
 	})
 	return r
@@ -83,13 +83,13 @@ func UploadRegistrationHandler(
 
 		wrapper := responsebody.Wrapper{Writer: w}
 		videoID := strconv.Itoa(newVideo.ID)
-		wrapper.Status(http.StatusOK).JsonBodyFromMap(map[string]any{
+		wrapper.Status(http.StatusCreated).JsonBodyFromMap(map[string]any{
 			"videoID": videoID,
 		})
 	}
 }
 
-func GetChunkCodeHandler(repoFact *repository.Factory, authenticator *auth.SessionAuthenticator) http.HandlerFunc {
+func GetChunkCodeHandler(repoFact *repository.Factory) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(r.URL.Query().Get("video-id"))
 		if convErr != nil {

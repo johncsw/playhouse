@@ -30,7 +30,8 @@ function sendChunks(videoID, videoFile, chunkCodes, chunkMaxSize, sessionToken) 
         }
 
         if (result.status === "completed") {
-            updateUploadStatusToCompleted()
+            updateUploadStatusToCompleted();
+            window.location.href = window.location.href + "/video/" + videoID;
         }
     };
 

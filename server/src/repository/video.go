@@ -113,3 +113,35 @@ func (r *videorepo) IsVideoReadyToTranscode(videoID int) (string, error) {
 	}
 	return v.URLToStream, nil
 }
+func (r *videorepo) IsVideoAvailableToStream(videoID int) (string, bool, error) {
+	var v model.Video
+	err := r.db.Model(&model.Video{}).Select("url_to_stream", "is_transcoded").Where("id = ? AND is_deleted = false AND type='video/mp4' AND length(url_to_stream) > 0 AND pending_chunks = 0", videoID).First(&v).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", v.IsTranscoded, nil
+	}
+	if err != nil {
+		return "", v.IsTranscoded, err
+	}
+	return v.URLToStream, v.IsTranscoded, nil
+}
+
+func (r *videorepo) UpdateVideoAsTranscoded(videoID int) error {
+	result := r.db.Model(&model.Video{}).Where("id = ?", videoID).Update("is_transcoded", true)
+	err := result.Error
+	if err != nil {
+		return err
+	}
+	updatedRows := result.RowsAffected
+	if updatedRows != 1 {
+		errMsg := fmt.Sprintf("the video is not marked as transcodede correctly. videoID=%v updatedRows=%v", videoID, updatedRows)
+		return errors.New(errMsg)
+	}
+
+	return nil
+}
+
+func (r *videorepo) GetAllUploadedVideo(sessionID int) ([]model.Video, error) {
+	var videos []model.Video
+	result := r.db.Model(&model.Video{}).Select("id", "name").Where("session_id = ? AND is_deleted = false AND pending_chunks = 0", sessionID).Find(&videos)
+	return videos, result.Error
+}

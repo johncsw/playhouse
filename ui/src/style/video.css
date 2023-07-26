@@ -1,0 +1,22 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full height of the viewport */
+    margin: 0; /* Remove default margin */
+    background-color: #000; /* Black background to enhance video visibility */
+}
+
+#videoPlayer {
+    /* Adjust these percentages as needed */
+    width: 80%; /* 80% of the viewport width */
+    height: 80%; /* 80% of the viewport height */
+
+    /* Minimum width and height */
+    min-width: 300px;
+    min-height: 200px;
+}
+
+#errorMessage {
+    text-align: center;
+}

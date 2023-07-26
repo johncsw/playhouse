@@ -62,3 +62,7 @@ func (Env) CHUNK_STORAGE_PATH() string {
 func (Env) SHELL_PATH() string {
 	return os.Getenv("SHELL_PATH")
 }
+
+func (Env) CLIENT_URL() string {
+	return os.Getenv("CLIENT_URL")
+}
