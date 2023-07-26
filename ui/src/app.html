@@ -5,13 +5,18 @@
     <link rel="stylesheet" type="text/css" href="style/app.css">
 </head>
 <body>
-    <div class="container">
+    <div id="uploadSection">
         <h1 id="title">Playhouse Video Upload</h1>
         <input type="file" id="fileInput" accept="video/*" >
         <button id="uploadButton" disabled>Upload</button>
         <p id="fileInfo"></p>
         <p id="uploadProgress"></p>
         <p id="uploadStatus"></p>
+    </div>
+    <h3 id="videoListHeader">Uploaded Video:</h3>
+    <div id="videoListSection">
+        <ul id = "uploadedVideoList">
+        </ul>
     </div>
     <script src="script/config.js"></script>
     <script src="script/select.js"></script>
@@ -20,5 +25,6 @@
     <script src="script/upload-get-chunk-code.js"></script>
     <script src="script/upload-send-chunk.js"></script>
     <script src="script/upload.js"></script>
+    <script src="script/get-uploaded-video.js"></script>
 </body>
 </html>
