@@ -6,10 +6,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"playhouse-server/auth"
+	"playhouse-server/env"
 	"playhouse-server/middleware"
 	"playhouse-server/repository"
 	"playhouse-server/responsebody"
-	"playhouse-server/util"
 	"strconv"
 )
 
@@ -42,7 +42,7 @@ func GetAllUploadedVideo(repoFact *repository.Factory, authenticator *auth.Sessi
 
 		var result []map[string]any
 		for _, v := range videos {
-			link := fmt.Sprintf("%s/video/%d", util.NewEnv().CLIENT_URL(), v.ID)
+			link := fmt.Sprintf("%s/video/%d", env.CLIENT_URL(), v.ID)
 			result = append(result, map[string]any{
 				"name": v.Name,
 				"link": link,

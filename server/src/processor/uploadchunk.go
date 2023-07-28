@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"os"
+	"playhouse-server/env"
 	"playhouse-server/repository"
 	"playhouse-server/requestbody"
 	"playhouse-server/responsebody"
@@ -228,7 +229,7 @@ func (p *UploadChunkProcessor) setUpChunkStorageDirectory() (string, error) {
 	}
 	// has not been set yet, but a record of a video does exist
 	if urlToStream == "" {
-		urlToStream = fmt.Sprintf("%v/%v", util.NewEnv().CHUNK_STORAGE_PATH(), p.VideoID)
+		urlToStream = fmt.Sprintf("%v/%v", env.CHUNK_STORAGE_PATH(), p.VideoID)
 		dirErr := os.Mkdir(urlToStream, 0755)
 		if dirErr != nil {
 			return "", dirErr

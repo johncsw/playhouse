@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"playhouse-server/env"
 	"playhouse-server/repository"
 	"playhouse-server/util"
 	"strings"
@@ -147,7 +148,7 @@ func (p *TranscodeVideoProcessor) transcodeVideo(input *assembleChunksOutput) tr
 
 	outputPath := strings.Replace(input.videoPath, ".mp4", ".mpd", 1)
 	cmdStr := fmt.Sprintf(transcodingCommand, input.videoPath, outputPath)
-	cmd := exec.Command(util.NewEnv().SHELL_PATH(), "-c", cmdStr)
+	cmd := exec.Command(env.SHELL_PATH(), "-c", cmdStr)
 
 	stderr, _ := cmd.StderrPipe()
 	if cmdErr := cmd.Start(); cmdErr != nil {

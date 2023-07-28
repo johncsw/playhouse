@@ -1,4 +1,4 @@
-package util
+package env
 
 import (
 	"github.com/joho/godotenv"
@@ -8,31 +8,18 @@ import (
 	"strconv"
 )
 
-type Env struct {
-}
-
-var (
-	env *Env
-)
-
-func NewEnv() *Env {
-	if env == nil {
-		env = &Env{}
-	}
-	return env
-}
-
-func (Env) Load() {
-	// export ENV_PATH manually if you're on local development
-	// env_local: ../conf/.env_local
-	// env_docker: ./conf/.env_docker
+// Load function would load .env file from the path specified in ENV_PATH
+// export ENV_PATH manually if you're on local development
+// env_local: ../conf/.env_local
+// env_docker: ./conf/.env_docker
+func Load() {
 	envPath := os.Getenv("ENV_PATH")
 	if err := godotenv.Load(envPath); err != nil {
 		panic(err)
 	}
 }
 
-func (Env) SESSION_TTL_HOUR() int {
+func SESSION_TTL_HOUR() int {
 	sessionTTLHour, err := strconv.Atoi(os.Getenv("APP_SESSION_TTL_HOUR"))
 	if err != nil {
 		panic(responsebody.ResponseErr{
@@ -43,26 +30,26 @@ func (Env) SESSION_TTL_HOUR() int {
 	return sessionTTLHour
 }
 
-func (Env) DSN() string {
+func DSN() string {
 	return os.Getenv("DB_DSN")
 }
 
-func (Env) JWT_SECRET() string {
+func JWT_SECRET() string {
 	return os.Getenv("APP_JWT_SECRET")
 }
 
-func (Env) CORS_ALLOWED_WEBSITE() string {
+func CORS_ALLOWED_WEBSITE() string {
 	return os.Getenv("CORS_ALLOWED_WEBSITE")
 }
 
-func (Env) CHUNK_STORAGE_PATH() string {
+func CHUNK_STORAGE_PATH() string {
 	return os.Getenv("CHUNK_STORAGE_PATH")
 }
 
-func (Env) SHELL_PATH() string {
+func SHELL_PATH() string {
 	return os.Getenv("SHELL_PATH")
 }
 
-func (Env) CLIENT_URL() string {
+func CLIENT_URL() string {
 	return os.Getenv("CLIENT_URL")
 }

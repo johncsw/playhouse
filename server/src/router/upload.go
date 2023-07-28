@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"playhouse-server/auth"
+	"playhouse-server/env"
 	"playhouse-server/middleware"
 	"playhouse-server/model"
 	"playhouse-server/processor"
@@ -28,7 +29,7 @@ func newUploadRouter() *chi.Mux {
 		ReadBufferSize:  2 * util.MB,
 		WriteBufferSize: 1 * util.KB,
 		CheckOrigin: func(r *http.Request) bool {
-			return r.Header.Get("Origin") == util.NewEnv().CORS_ALLOWED_WEBSITE()
+			return r.Header.Get("Origin") == env.CORS_ALLOWED_WEBSITE()
 		},
 	}
 

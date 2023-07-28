@@ -5,7 +5,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
-	"playhouse-server/util"
+	"playhouse-server/env"
 )
 
 var (
@@ -18,7 +18,6 @@ type Factory struct {
 
 func NewFactory() *Factory {
 	if db == nil {
-		env := util.NewEnv()
 		driverConfig := postgres.Config{
 			DSN:                  env.DSN(),
 			PreferSimpleProtocol: true,

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"net/http"
+	"playhouse-server/env"
 	"playhouse-server/model"
 	"playhouse-server/responsebody"
-	"playhouse-server/util"
 	"time"
 )
 
@@ -16,7 +16,6 @@ type sessionrepo struct {
 
 func (r *sessionrepo) NewSession() *model.Session {
 	now := time.Now().UTC()
-	env := util.NewEnv()
 	sessionTTLHour := env.SESSION_TTL_HOUR()
 	due := now.Add(time.Hour * time.Duration(sessionTTLHour))
 

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
+	"playhouse-server/env"
 	"playhouse-server/repository"
 	"playhouse-server/responsebody"
-	"playhouse-server/util"
 )
 
 type JWTClaims struct {
@@ -15,7 +15,6 @@ type JWTClaims struct {
 }
 type SessionAuthenticator struct {
 	RepoFact *repository.Factory
-	Env      *util.Env
 }
 
 var (
@@ -26,7 +25,6 @@ func NewSessionAuthenticator() *SessionAuthenticator {
 	if sessionautheticator == nil {
 		sessionautheticator = &SessionAuthenticator{
 			RepoFact: repository.NewFactory(),
-			Env:      util.NewEnv(),
 		}
 	}
 	return sessionautheticator
@@ -42,7 +40,7 @@ func (a SessionAuthenticator) InitializeSession() string {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	secret := a.Env.JWT_SECRET()
+	secret := env.JWT_SECRET()
 	tokenStr, err := token.SignedString([]byte(secret))
 	if err != nil {
 		panic(responsebody.ResponseErr{
@@ -63,7 +61,7 @@ func (a SessionAuthenticator) IsJWTValid(tokenStr string) bool {
 		panic(authError)
 	}
 
-	secret := a.Env.JWT_SECRET()
+	secret := env.JWT_SECRET()
 	// Parse the token
 	token, err := jwt.ParseWithClaims(tokenStr, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
@@ -95,7 +93,7 @@ func (a SessionAuthenticator) getClaims(tokenStr string) *JWTClaims {
 		panic(authError)
 	}
 
-	secret := a.Env.JWT_SECRET()
+	secret := env.JWT_SECRET()
 	// Parse the token
 	token, err := jwt.ParseWithClaims(tokenStr, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
