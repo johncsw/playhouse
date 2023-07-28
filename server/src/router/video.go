@@ -8,7 +8,7 @@ import (
 	"playhouse-server/auth"
 	"playhouse-server/env"
 	"playhouse-server/middleware"
-	"playhouse-server/repository"
+	"playhouse-server/repo"
 	"playhouse-server/responsebody"
 	"strconv"
 )
@@ -17,20 +17,19 @@ func newVideoRouter() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.AuthHandler)
-	repoFact := repository.NewFactory()
 	authenticator := auth.NewSessionAuthenticator()
 
 	r.Group(func(r chi.Router) {
-		r.Get("/streaming/{videoID}", GetManifestHandler(repoFact))
-		r.Get("/streaming/{videoID}/{m4sFileName}", GetStreamingContentHanlder(repoFact))
-		r.Get("/all", GetAllUploadedVideo(repoFact, authenticator))
+		r.Get("/streaming/{videoID}", GetManifestHandler())
+		r.Get("/streaming/{videoID}/{m4sFileName}", GetStreamingContentHanlder())
+		r.Get("/all", GetAllUploadedVideo(authenticator))
 	})
 	return r
 }
 
-func GetAllUploadedVideo(repoFact *repository.Factory, authenticator *auth.SessionAuthenticator) http.HandlerFunc {
+func GetAllUploadedVideo(authenticator *auth.SessionAuthenticator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		videoRepo := repoFact.NewVideoRepo()
+		videoRepo := repo.VideoRepo()
 		sessionID := authenticator.GetSessionId(r)
 		videos, err := videoRepo.GetAllUploadedVideo(sessionID)
 		if err != nil {
@@ -54,7 +53,7 @@ func GetAllUploadedVideo(repoFact *repository.Factory, authenticator *auth.Sessi
 	}
 }
 
-func GetManifestHandler(repoFact *repository.Factory) http.HandlerFunc {
+func GetManifestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(chi.URLParam(r, "videoID"))
 		if convErr != nil {
@@ -64,7 +63,7 @@ func GetManifestHandler(repoFact *repository.Factory) http.HandlerFunc {
 			})
 		}
 
-		videoRepo := repoFact.NewVideoRepo()
+		videoRepo := repo.VideoRepo()
 		URLToStream, isTransCoded, videoErr := videoRepo.IsVideoAvailableToStream(videoID)
 		if videoErr != nil {
 			panic(responsebody.ResponseErr{
@@ -93,7 +92,7 @@ func GetManifestHandler(repoFact *repository.Factory) http.HandlerFunc {
 	}
 }
 
-func GetStreamingContentHanlder(repoFact *repository.Factory) http.HandlerFunc {
+func GetStreamingContentHanlder() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(chi.URLParam(r, "videoID"))
 		if convErr != nil {
@@ -103,7 +102,7 @@ func GetStreamingContentHanlder(repoFact *repository.Factory) http.HandlerFunc {
 			})
 		}
 
-		videoRepo := repoFact.NewVideoRepo()
+		videoRepo := repo.VideoRepo()
 		URLToStream, isTransCoded, videoErr := videoRepo.IsVideoAvailableToStream(videoID)
 		if videoErr != nil {
 			panic(responsebody.ResponseErr{

@@ -8,15 +8,14 @@ import (
 	"os"
 	"os/exec"
 	"playhouse-server/env"
-	"playhouse-server/repository"
+	"playhouse-server/repo"
 	"playhouse-server/util"
 	"strings"
 	"time"
 )
 
 type TranscodeVideoProcessor struct {
-	repoFact *repository.Factory
-	videoID  int
+	videoID int
 }
 
 const transcodingCommand = "ffmpeg -i %s %s"
@@ -72,7 +71,7 @@ func (p *TranscodeVideoProcessor) Process() {
 func (p *TranscodeVideoProcessor) checkVideoAndChunks() checkVideoAndChunkOutput {
 	output := checkVideoAndChunkOutput{passCheck: false}
 
-	videoRepo := p.repoFact.NewVideoRepo()
+	videoRepo := repo.VideoRepo()
 	URLTostream, videoErr := videoRepo.IsVideoReadyToTranscode(p.videoID)
 
 	if videoErr != nil || URLTostream == "" {
@@ -82,7 +81,7 @@ func (p *TranscodeVideoProcessor) checkVideoAndChunks() checkVideoAndChunkOutput
 		return output
 	}
 
-	chunkRepo := p.repoFact.NewChunkRepo()
+	chunkRepo := repo.ChunkRepo()
 	chunkCodes, chunkErr := chunkRepo.GetChunkCodeByIsUploaded(p.videoID, true)
 	if chunkErr != nil {
 		output.err = chunkErr
@@ -165,5 +164,5 @@ func (p *TranscodeVideoProcessor) transcodeVideo(input *assembleChunksOutput) tr
 }
 
 func (p *TranscodeVideoProcessor) markVideoAsTranscoded() error {
-	return p.repoFact.NewVideoRepo().UpdateVideoAsTranscoded(p.videoID)
+	return repo.VideoRepo().UpdateVideoAsTranscoded(p.videoID)
 }

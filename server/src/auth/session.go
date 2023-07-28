@@ -5,7 +5,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"playhouse-server/env"
-	"playhouse-server/repository"
+	"playhouse-server/repo"
 	"playhouse-server/responsebody"
 )
 
@@ -14,7 +14,6 @@ type JWTClaims struct {
 	SessionID int `json:"sessionID"`
 }
 type SessionAuthenticator struct {
-	RepoFact *repository.Factory
 }
 
 var (
@@ -23,15 +22,13 @@ var (
 
 func NewSessionAuthenticator() *SessionAuthenticator {
 	if sessionautheticator == nil {
-		sessionautheticator = &SessionAuthenticator{
-			RepoFact: repository.NewFactory(),
-		}
+		sessionautheticator = &SessionAuthenticator{}
 	}
 	return sessionautheticator
 }
 
 func (a SessionAuthenticator) InitializeSession() string {
-	sessionRepo := a.RepoFact.NewSessionRepo()
+	sessionRepo := repo.SessionRepo()
 	s := sessionRepo.NewSession()
 	sessionID := s.ID
 	claims := JWTClaims{
@@ -75,7 +72,7 @@ func (a SessionAuthenticator) IsJWTValid(tokenStr string) bool {
 	}
 
 	if claims, ok := token.Claims.(*JWTClaims); ok && token.Valid {
-		sessionRepo := a.RepoFact.NewSessionRepo()
+		sessionRepo := repo.SessionRepo()
 		return sessionRepo.IsSessionAvailable(claims.SessionID)
 	} else {
 		panic(authError)

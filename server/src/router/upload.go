@@ -11,7 +11,7 @@ import (
 	"playhouse-server/middleware"
 	"playhouse-server/model"
 	"playhouse-server/processor"
-	"playhouse-server/repository"
+	"playhouse-server/repo"
 	"playhouse-server/requestbody"
 	"playhouse-server/responsebody"
 	"playhouse-server/util"
@@ -23,7 +23,6 @@ func newUploadRouter() *chi.Mux {
 
 	r.Use(middleware.AuthHandler)
 
-	repoFact := repository.NewFactory()
 	authenticator := auth.NewSessionAuthenticator()
 	webSocketUpgrader := &websocket.Upgrader{
 		ReadBufferSize:  2 * util.MB,
@@ -34,15 +33,15 @@ func newUploadRouter() *chi.Mux {
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Post("/register", UploadRegistrationHandler(repoFact, authenticator))
-		r.Get("/chunk-code", GetChunkCodeHandler(repoFact))
-		r.Get("/chunks", ChunkUploadHandler(repoFact, authenticator, webSocketUpgrader))
+		r.Post("/register", UploadRegistrationHandler(authenticator))
+		r.Get("/chunk-code", GetChunkCodeHandler())
+		r.Get("/chunks", ChunkUploadHandler(authenticator, webSocketUpgrader))
 	})
 	return r
 }
 
 func UploadRegistrationHandler(
-	repoFact *repository.Factory, authenticator *auth.SessionAuthenticator) http.HandlerFunc {
+	authenticator *auth.SessionAuthenticator) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		b := &requestbody.UploadRegistrationBody{}
@@ -56,17 +55,15 @@ func UploadRegistrationHandler(
 
 		var newVideo model.Video
 		sessionID := authenticator.GetSessionId(r)
-
-		transaction := repoFact.NewTransaction()
-		err := transaction.Execute(func(tx *gorm.DB) error {
-			videoRepo := repoFact.NewVideoRepo()
+		err := repo.NewTransaction(func(tx *gorm.DB) error {
+			videoRepo := repo.VideoRepo()
 
 			v, verr := videoRepo.NewVideo(b, sessionID, tx)
 			if verr != nil {
 				return verr
 			}
 
-			chunkRepo := repoFact.NewChunkRepo()
+			chunkRepo := repo.ChunkRepo()
 			if cerr := chunkRepo.NewChunks(v, tx); cerr != nil {
 				return cerr
 			}
@@ -90,7 +87,7 @@ func UploadRegistrationHandler(
 	}
 }
 
-func GetChunkCodeHandler(repoFact *repository.Factory) http.HandlerFunc {
+func GetChunkCodeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(r.URL.Query().Get("video-id"))
 		if convErr != nil {
@@ -100,7 +97,7 @@ func GetChunkCodeHandler(repoFact *repository.Factory) http.HandlerFunc {
 			})
 		}
 
-		videoRepo := repoFact.NewVideoRepo()
+		videoRepo := repo.VideoRepo()
 		videoSize, videoErr := videoRepo.GetVideoSize(videoID)
 		if videoErr != nil {
 			errCode := http.StatusInternalServerError
@@ -116,7 +113,7 @@ func GetChunkCodeHandler(repoFact *repository.Factory) http.HandlerFunc {
 		}
 		maxChunkSize := util.MaxChunkSize(videoSize)
 
-		chunkRepo := repoFact.NewChunkRepo()
+		chunkRepo := repo.ChunkRepo()
 		codes, dbErr := chunkRepo.GetChunkCodeByIsUploaded(videoID, false)
 		if dbErr != nil {
 			panic(responsebody.ResponseErr{
@@ -134,7 +131,7 @@ func GetChunkCodeHandler(repoFact *repository.Factory) http.HandlerFunc {
 	}
 }
 
-func ChunkUploadHandler(repoFact *repository.Factory, authenticator *auth.SessionAuthenticator, webSocketUpgrader *websocket.Upgrader) http.HandlerFunc {
+func ChunkUploadHandler(authenticator *auth.SessionAuthenticator, webSocketUpgrader *websocket.Upgrader) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(r.URL.Query().Get("video-id"))
 		if convErr != nil {
@@ -145,7 +142,7 @@ func ChunkUploadHandler(repoFact *repository.Factory, authenticator *auth.Sessio
 		}
 		sessionID := authenticator.GetSessionId(r)
 
-		videoRepo := repoFact.NewVideoRepo()
+		videoRepo := repo.VideoRepo()
 		v, videoErr := videoRepo.GetPendingUploadVideo(videoID, sessionID)
 		if videoErr != nil {
 			errCode := http.StatusInternalServerError
@@ -171,7 +168,6 @@ func ChunkUploadHandler(repoFact *repository.Factory, authenticator *auth.Sessio
 		p := processor.UploadChunkProcessor{
 			WSConn:       conn,
 			VideoID:      videoID,
-			RepoFact:     repoFact,
 			NumsOfChunks: int(v.PendingChunks),
 			SessionID:    sessionID,
 		}

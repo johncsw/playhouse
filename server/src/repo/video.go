@@ -1,4 +1,4 @@
-package repository
+package repo
 
 import (
 	"errors"
@@ -12,13 +12,12 @@ import (
 )
 
 type videorepo struct {
-	db *gorm.DB
 }
 
 func (r *videorepo) NewVideo(b *requestbody.UploadRegistrationBody, sessionID int, tx *gorm.DB) (*model.Video, error) {
 	var executor *gorm.DB
 	if tx == nil {
-		executor = r.db
+		executor = db
 	} else {
 		executor = tx
 	}
@@ -40,20 +39,20 @@ func (r *videorepo) NewVideo(b *requestbody.UploadRegistrationBody, sessionID in
 
 func (r *videorepo) GetVideoSize(id int) (int, error) {
 	var v model.Video
-	err := r.db.Select("size").First(&v, id).Error
+	err := db.Select("size").First(&v, id).Error
 	return v.Size, err
 }
 
 func (r *videorepo) GetPendingUploadVideo(videoID int, sessionID int) (*model.Video, error) {
 	var v model.Video
-	result := r.db.Model(&model.Video{}).Select("pending_chunks").Where("id = ? AND session_id = ? AND is_deleted = false AND pending_chunks > 0 AND is_transcoded = false", videoID, sessionID).First(&v)
+	result := db.Model(&model.Video{}).Select("pending_chunks").Where("id = ? AND session_id = ? AND is_deleted = false AND pending_chunks > 0 AND is_transcoded = false", videoID, sessionID).First(&v)
 	return &v, result.Error
 }
 
 func (r *videorepo) UpdatePendingChunks(videoID int, pendingChunks int32, tx *gorm.DB) error {
 	var executor *gorm.DB
 	if tx == nil {
-		executor = r.db
+		executor = db
 	} else {
 		executor = tx
 	}
@@ -82,13 +81,13 @@ func (r *videorepo) UpdatePendingChunks(videoID int, pendingChunks int32, tx *go
 
 func (r *videorepo) GetVideoURLToStream(videoID int) (string, error) {
 	var v model.Video
-	err := r.db.Model(&model.Video{}).Select("url_to_stream").Where("id = ? ", videoID).First(&v).Error
+	err := db.Model(&model.Video{}).Select("url_to_stream").Where("id = ? ", videoID).First(&v).Error
 	return v.URLToStream, err
 }
 
 func (r *videorepo) SetVideoURLToStream(videoID int, url string) error {
 	// update video url to stream
-	result := r.db.Model(&model.Video{}).Where("id = ?", videoID).Update("url_to_stream", url)
+	result := db.Model(&model.Video{}).Where("id = ?", videoID).Update("url_to_stream", url)
 	err := result.Error
 	if err != nil {
 		return err
@@ -104,7 +103,7 @@ func (r *videorepo) SetVideoURLToStream(videoID int, url string) error {
 
 func (r *videorepo) IsVideoReadyToTranscode(videoID int) (string, error) {
 	var v model.Video
-	err := r.db.Model(&model.Video{}).Select("url_to_stream").Where("id = ? AND is_deleted = false AND is_transcoded=false AND type='video/mp4' AND length(url_to_stream) > 0 AND pending_chunks = 0", videoID).First(&v).Error
+	err := db.Model(&model.Video{}).Select("url_to_stream").Where("id = ? AND is_deleted = false AND is_transcoded=false AND type='video/mp4' AND length(url_to_stream) > 0 AND pending_chunks = 0", videoID).First(&v).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return "", nil
 	}
@@ -115,7 +114,7 @@ func (r *videorepo) IsVideoReadyToTranscode(videoID int) (string, error) {
 }
 func (r *videorepo) IsVideoAvailableToStream(videoID int) (string, bool, error) {
 	var v model.Video
-	err := r.db.Model(&model.Video{}).Select("url_to_stream", "is_transcoded").Where("id = ? AND is_deleted = false AND type='video/mp4' AND length(url_to_stream) > 0 AND pending_chunks = 0", videoID).First(&v).Error
+	err := db.Model(&model.Video{}).Select("url_to_stream", "is_transcoded").Where("id = ? AND is_deleted = false AND type='video/mp4' AND length(url_to_stream) > 0 AND pending_chunks = 0", videoID).First(&v).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return "", v.IsTranscoded, nil
 	}
@@ -126,7 +125,7 @@ func (r *videorepo) IsVideoAvailableToStream(videoID int) (string, bool, error) 
 }
 
 func (r *videorepo) UpdateVideoAsTranscoded(videoID int) error {
-	result := r.db.Model(&model.Video{}).Where("id = ?", videoID).Update("is_transcoded", true)
+	result := db.Model(&model.Video{}).Where("id = ?", videoID).Update("is_transcoded", true)
 	err := result.Error
 	if err != nil {
 		return err
@@ -142,6 +141,6 @@ func (r *videorepo) UpdateVideoAsTranscoded(videoID int) error {
 
 func (r *videorepo) GetAllUploadedVideo(sessionID int) ([]model.Video, error) {
 	var videos []model.Video
-	result := r.db.Model(&model.Video{}).Select("id", "name").Where("session_id = ? AND is_deleted = false AND pending_chunks = 0", sessionID).Find(&videos)
+	result := db.Model(&model.Video{}).Select("id", "name").Where("session_id = ? AND is_deleted = false AND pending_chunks = 0", sessionID).Find(&videos)
 	return videos, result.Error
 }

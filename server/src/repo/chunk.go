@@ -1,4 +1,4 @@
-package repository
+package repo
 
 import (
 	"errors"
@@ -12,13 +12,12 @@ import (
 )
 
 type chunkrepo struct {
-	db *gorm.DB
 }
 
 func (r *chunkrepo) NewChunks(v *model.Video, tx *gorm.DB) error {
 	var executor *gorm.DB
 	if tx == nil {
-		executor = r.db
+		executor = db
 	} else {
 		executor = tx
 	}
@@ -41,7 +40,7 @@ func (r *chunkrepo) NewChunks(v *model.Video, tx *gorm.DB) error {
 
 func (r *chunkrepo) GetChunkCodeByIsUploaded(videoID int, isUploaded bool) ([]int, error) {
 	var chunks []model.Chunk
-	err := r.db.Select("code").Where("video_id = ? AND is_uploaded = ?", videoID, isUploaded).Find(&chunks).Error
+	err := db.Select("code").Where("video_id = ? AND is_uploaded = ?", videoID, isUploaded).Find(&chunks).Error
 	codes := make([]int, len(chunks))
 	for i, c := range chunks {
 		codes[i] = c.Code
@@ -59,7 +58,7 @@ func (r *chunkrepo) SaveUploadedChunk(videoID int, urlToStream string, b *reques
 
 	var executor *gorm.DB
 	if tx == nil {
-		executor = r.db
+		executor = db
 	} else {
 		executor = tx
 	}
@@ -87,7 +86,7 @@ func (r *chunkrepo) SaveUploadedChunk(videoID int, urlToStream string, b *reques
 func (r *chunkrepo) GetNumberOfNotUploadedChunks(videoID int, tx *gorm.DB) (int, error) {
 	var executor *gorm.DB
 	if tx == nil {
-		executor = r.db
+		executor = db
 	} else {
 		executor = tx
 	}

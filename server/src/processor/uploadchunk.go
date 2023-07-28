@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 	"playhouse-server/env"
-	"playhouse-server/repository"
+	"playhouse-server/repo"
 	"playhouse-server/requestbody"
 	"playhouse-server/responsebody"
 	"playhouse-server/util"
@@ -19,7 +19,6 @@ type UploadChunkProcessor struct {
 	WSConn       *websocket.Conn
 	VideoID      int
 	SessionID    int
-	RepoFact     *repository.Factory
 	NumsOfChunks int
 	URLToStream  string
 }
@@ -42,17 +41,15 @@ func (p *UploadChunkProcessor) preProcess(resultPipe chan<- responsebody.UploadC
 
 func (p *UploadChunkProcessor) postProcess() error {
 	pendingChunks := p.NumsOfChunks
-
-	transaction := p.RepoFact.NewTransaction()
-	err := transaction.Execute(func(tx *gorm.DB) error {
-		uploadedChunks, getChunkErr := p.RepoFact.NewChunkRepo().GetNumberOfNotUploadedChunks(p.VideoID, tx)
+	err := repo.NewTransaction(func(tx *gorm.DB) error {
+		uploadedChunks, getChunkErr := repo.ChunkRepo().GetNumberOfNotUploadedChunks(p.VideoID, tx)
 		if getChunkErr != nil {
 			return getChunkErr
 		}
 
 		pendingChunks -= uploadedChunks
 
-		updateVideoErr := p.RepoFact.NewVideoRepo().UpdatePendingChunks(p.VideoID, int32(pendingChunks), tx)
+		updateVideoErr := repo.VideoRepo().UpdatePendingChunks(p.VideoID, int32(pendingChunks), tx)
 		if updateVideoErr != nil {
 			return updateVideoErr
 		}
@@ -66,7 +63,7 @@ func (p *UploadChunkProcessor) postProcess() error {
 
 	if pendingChunks == 0 {
 		go func() {
-			p := TranscodeVideoProcessor{videoID: p.VideoID, repoFact: p.RepoFact}
+			p := TranscodeVideoProcessor{videoID: p.VideoID}
 			p.Process()
 		}()
 	}
@@ -77,7 +74,7 @@ func (p *UploadChunkProcessor) postProcess() error {
 // The whole processing flow in a nutshell are:
 // 1. set up result pipe to consume the result of saving chunks
 // 2. consume messages from websocket connection
-// 3. save the chunk to repository, raw data to file system and metadata to database
+// 3. save the chunk to repo, raw data to file system and metadata to database
 // 4. send the result of saving chunks to result pipe
 // 5. send the result of saving chunks to client from result pipe
 // 6. operations from 2-6 are done concurrently
@@ -199,7 +196,7 @@ func (p *UploadChunkProcessor) saveToRepo(b *requestbody.UploadChunkWSBody, quit
 		case <-quit:
 			return
 		default:
-			chunkRepo := p.RepoFact.NewChunkRepo()
+			chunkRepo := repo.ChunkRepo()
 			err := chunkRepo.SaveUploadedChunk(p.VideoID, p.URLToStream, b, nil)
 			if err != nil {
 				result <- responsebody.UploadChunkWSBody{
@@ -222,7 +219,7 @@ func (p *UploadChunkProcessor) saveToRepo(b *requestbody.UploadChunkWSBody, quit
 }
 
 func (p *UploadChunkProcessor) setUpChunkStorageDirectory() (string, error) {
-	videoRepo := p.RepoFact.NewVideoRepo()
+	videoRepo := repo.VideoRepo()
 	urlToStream, err := videoRepo.GetVideoURLToStream(p.VideoID)
 	if err != nil {
 		return "", err

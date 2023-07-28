@@ -1,4 +1,4 @@
-package repository
+package repo
 
 import (
 	"errors"
@@ -24,7 +24,7 @@ func (r *sessionrepo) NewSession() *model.Session {
 		DueAt:       &due,
 		CreatedAt:   &now,
 	}
-	result := r.db.Create(s)
+	result := db.Create(s)
 
 	if err := result.Error; err != nil {
 		panic(responsebody.ResponseErr{
@@ -43,7 +43,7 @@ func (r *sessionrepo) IsSessionAvailable(ID int) bool {
 
 	var s model.Session
 
-	if err := r.db.First(&s, ID).Error; err != nil {
+	if err := db.First(&s, ID).Error; err != nil {
 		code := http.StatusInternalServerError
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			code = http.StatusForbidden
