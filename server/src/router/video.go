@@ -18,14 +18,14 @@ func newVideoRouter() *chi.Mux {
 	r.Use(middleware.AuthHandler)
 
 	r.Group(func(r chi.Router) {
-		r.Get("/streaming/{videoID}", GetManifestHandler())
-		r.Get("/streaming/{videoID}/{m4sFileName}", GetStreamingContentHanlder())
-		r.Get("/all", GetAllUploadedVideo())
+		r.Get("/streaming/{videoID}", getManifestHandler())
+		r.Get("/streaming/{videoID}/{m4sFileName}", getStreamingContentHandler())
+		r.Get("/all", getAllUploadedVideo())
 	})
 	return r
 }
 
-func GetAllUploadedVideo() http.HandlerFunc {
+func getAllUploadedVideo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoRepo := repo.VideoRepo()
 		sessionID := r.Context().Value("sessionID").(int)
@@ -52,7 +52,7 @@ func GetAllUploadedVideo() http.HandlerFunc {
 	}
 }
 
-func GetManifestHandler() http.HandlerFunc {
+func getManifestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(chi.URLParam(r, "videoID"))
 		if convErr != nil {
@@ -91,7 +91,7 @@ func GetManifestHandler() http.HandlerFunc {
 	}
 }
 
-func GetStreamingContentHanlder() http.HandlerFunc {
+func getStreamingContentHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(chi.URLParam(r, "videoID"))
 		if convErr != nil {

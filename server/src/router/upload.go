@@ -31,14 +31,14 @@ func newUploadRouter() *chi.Mux {
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Post("/register", UploadRegistrationHandler())
-		r.Get("/chunk-code", GetChunkCodeHandler())
-		r.Get("/chunks", ChunkUploadHandler(webSocketUpgrader))
+		r.Post("/register", uploadRegistrationHandler())
+		r.Get("/chunk-code", getChunkCodeHandler())
+		r.Get("/chunks", chunkUploadHandler(webSocketUpgrader))
 	})
 	return r
 }
 
-func UploadRegistrationHandler() http.HandlerFunc {
+func uploadRegistrationHandler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		b := &request.UploadRegistrationBody{}
@@ -84,7 +84,7 @@ func UploadRegistrationHandler() http.HandlerFunc {
 	}
 }
 
-func GetChunkCodeHandler() http.HandlerFunc {
+func getChunkCodeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(r.URL.Query().Get("video-id"))
 		if convErr != nil {
@@ -128,7 +128,7 @@ func GetChunkCodeHandler() http.HandlerFunc {
 	}
 }
 
-func ChunkUploadHandler(webSocketUpgrader *websocket.Upgrader) http.HandlerFunc {
+func chunkUploadHandler(webSocketUpgrader *websocket.Upgrader) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(r.URL.Query().Get("video-id"))
 		if convErr != nil {
