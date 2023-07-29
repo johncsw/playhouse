@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
 	"net/http"
-	"playhouse-server/auth"
 	"playhouse-server/env"
 	"playhouse-server/middleware"
 	"playhouse-server/model"
@@ -23,7 +22,6 @@ func newUploadRouter() *chi.Mux {
 
 	r.Use(middleware.AuthHandler)
 
-	authenticator := auth.NewSessionAuthenticator()
 	webSocketUpgrader := &websocket.Upgrader{
 		ReadBufferSize:  2 * util.MB,
 		WriteBufferSize: 1 * util.KB,
@@ -33,15 +31,14 @@ func newUploadRouter() *chi.Mux {
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Post("/register", UploadRegistrationHandler(authenticator))
+		r.Post("/register", UploadRegistrationHandler())
 		r.Get("/chunk-code", GetChunkCodeHandler())
-		r.Get("/chunks", ChunkUploadHandler(authenticator, webSocketUpgrader))
+		r.Get("/chunks", ChunkUploadHandler(webSocketUpgrader))
 	})
 	return r
 }
 
-func UploadRegistrationHandler(
-	authenticator *auth.SessionAuthenticator) http.HandlerFunc {
+func UploadRegistrationHandler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		b := &requestbody.UploadRegistrationBody{}
@@ -54,7 +51,7 @@ func UploadRegistrationHandler(
 		}
 
 		var newVideo model.Video
-		sessionID := authenticator.GetSessionId(r)
+		sessionID := r.Context().Value("sessionID").(int)
 		err := repo.NewTransaction(func(tx *gorm.DB) error {
 			videoRepo := repo.VideoRepo()
 
@@ -131,7 +128,7 @@ func GetChunkCodeHandler() http.HandlerFunc {
 	}
 }
 
-func ChunkUploadHandler(authenticator *auth.SessionAuthenticator, webSocketUpgrader *websocket.Upgrader) http.HandlerFunc {
+func ChunkUploadHandler(webSocketUpgrader *websocket.Upgrader) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(r.URL.Query().Get("video-id"))
 		if convErr != nil {
@@ -140,8 +137,8 @@ func ChunkUploadHandler(authenticator *auth.SessionAuthenticator, webSocketUpgra
 				ErrBody: convErr,
 			})
 		}
-		sessionID := authenticator.GetSessionId(r)
 
+		sessionID := r.Context().Value("sessionID").(int)
 		videoRepo := repo.VideoRepo()
 		v, videoErr := videoRepo.GetPendingUploadVideo(videoID, sessionID)
 		if videoErr != nil {

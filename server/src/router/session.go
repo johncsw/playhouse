@@ -8,19 +8,18 @@ import (
 )
 
 func newSessionRouter() *chi.Mux {
-	authenticator := auth.NewSessionAuthenticator()
 
 	r := chi.NewRouter()
 	r.Group(func(r chi.Router) {
-		r.Post("/", newSessionHandler(authenticator))
+		r.Post("/", newSessionHandler())
 	})
 	return r
 }
 
-func newSessionHandler(authenticator *auth.SessionAuthenticator) http.HandlerFunc {
+func newSessionHandler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		token := authenticator.InitializeSession()
+		token := auth.CreateSessionToken()
 		wrapper := responsebody.Wrapper{Writer: w}
 		wrapper.Header(map[string]string{
 			"Authorization": token,

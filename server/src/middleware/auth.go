@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"playhouse-server/auth"
@@ -14,10 +15,8 @@ func AuthHandler(next http.Handler) http.Handler {
 			sessionToken = r.URL.Query().Get("token")
 		}
 
-		authenticator := auth.NewSessionAuthenticator()
-
-		isNotValid := !authenticator.IsJWTValid(sessionToken)
-		if isNotValid {
+		isValid, sessionID := auth.IsSessionTokenValid(sessionToken)
+		if !isValid {
 			panic(
 				responsebody.ResponseErr{
 					Code:    http.StatusForbidden,
@@ -25,6 +24,8 @@ func AuthHandler(next http.Handler) http.Handler {
 				})
 		}
 
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), "sessionID", sessionID)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

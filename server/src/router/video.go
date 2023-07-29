@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"net/http"
-	"playhouse-server/auth"
 	"playhouse-server/env"
 	"playhouse-server/middleware"
 	"playhouse-server/repo"
@@ -17,20 +16,20 @@ func newVideoRouter() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.AuthHandler)
-	authenticator := auth.NewSessionAuthenticator()
 
 	r.Group(func(r chi.Router) {
 		r.Get("/streaming/{videoID}", GetManifestHandler())
 		r.Get("/streaming/{videoID}/{m4sFileName}", GetStreamingContentHanlder())
-		r.Get("/all", GetAllUploadedVideo(authenticator))
+		r.Get("/all", GetAllUploadedVideo())
 	})
 	return r
 }
 
-func GetAllUploadedVideo(authenticator *auth.SessionAuthenticator) http.HandlerFunc {
+func GetAllUploadedVideo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoRepo := repo.VideoRepo()
-		sessionID := authenticator.GetSessionId(r)
+		sessionID := r.Context().Value("sessionID").(int)
+
 		videos, err := videoRepo.GetAllUploadedVideo(sessionID)
 		if err != nil {
 			panic(responsebody.ResponseErr{
