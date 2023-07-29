@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 	"math"
 	"playhouse-server/model"
-	"playhouse-server/requestbody"
+	"playhouse-server/request"
 	"playhouse-server/util"
 	"time"
 )
@@ -14,7 +14,7 @@ import (
 type videorepo struct {
 }
 
-func (r *videorepo) NewVideo(b *requestbody.UploadRegistrationBody, sessionID int, tx *gorm.DB) (*model.Video, error) {
+func (r *videorepo) NewVideo(b *request.UploadRegistrationBody, sessionID int, tx *gorm.DB) (*model.Video, error) {
 	var executor *gorm.DB
 	if tx == nil {
 		executor = db

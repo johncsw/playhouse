@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"playhouse-server/auth"
-	"playhouse-server/responsebody"
+	"playhouse-server/response"
 )
 
 func AuthHandler(next http.Handler) http.Handler {
@@ -18,9 +18,9 @@ func AuthHandler(next http.Handler) http.Handler {
 		isValid, sessionID := auth.IsSessionTokenValid(sessionToken)
 		if !isValid {
 			panic(
-				responsebody.ResponseErr{
-					Code:    http.StatusForbidden,
-					ErrBody: errors.New("not a valid token"),
+				response.Error{
+					Code:  http.StatusForbidden,
+					Cause: errors.New("not a valid token"),
 				})
 		}
 

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"playhouse-server/env"
 	"playhouse-server/model"
-	"playhouse-server/responsebody"
+	"playhouse-server/response"
 	"time"
 )
 
@@ -27,9 +27,9 @@ func (r *sessionrepo) NewSession() *model.Session {
 	result := db.Create(s)
 
 	if err := result.Error; err != nil {
-		panic(responsebody.ResponseErr{
-			Code:    http.StatusInternalServerError,
-			ErrBody: err,
+		panic(response.Error{
+			Code:  http.StatusInternalServerError,
+			Cause: err,
 		})
 	}
 
@@ -49,9 +49,9 @@ func (r *sessionrepo) IsSessionAvailable(ID int) bool {
 			code = http.StatusForbidden
 		}
 
-		panic(responsebody.ResponseErr{
-			Code:    code,
-			ErrBody: errors.New("session not found"),
+		panic(response.Error{
+			Code:  code,
+			Cause: errors.New("session not found"),
 		})
 	}
 

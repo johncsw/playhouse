@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 	"os"
 	"playhouse-server/model"
-	"playhouse-server/requestbody"
+	"playhouse-server/request"
 	"playhouse-server/util"
 	"time"
 )
@@ -48,7 +48,7 @@ func (r *chunkrepo) GetChunkCodeByIsUploaded(videoID int, isUploaded bool) ([]in
 	return codes, err
 }
 
-func (r *chunkrepo) SaveUploadedChunk(videoID int, urlToStream string, b *requestbody.UploadChunkWSBody, tx *gorm.DB) error {
+func (r *chunkrepo) SaveUploadedChunk(videoID int, urlToStream string, b *request.UploadChunkWSBody, tx *gorm.DB) error {
 	filePath := fmt.Sprintf("%v/%v-%v.bin", urlToStream, videoID, b.Code)
 	fileErr := os.WriteFile(filePath, b.Content, 0444) // Read only to everyone
 	if fileErr != nil {

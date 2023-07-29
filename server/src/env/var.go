@@ -4,7 +4,7 @@ import (
 	"github.com/joho/godotenv"
 	"net/http"
 	"os"
-	"playhouse-server/responsebody"
+	"playhouse-server/response"
 	"strconv"
 )
 
@@ -22,9 +22,9 @@ func Load() {
 func SESSION_TTL_HOUR() int {
 	sessionTTLHour, err := strconv.Atoi(os.Getenv("APP_SESSION_TTL_HOUR"))
 	if err != nil {
-		panic(responsebody.ResponseErr{
-			Code:    http.StatusInternalServerError,
-			ErrBody: err,
+		panic(response.Error{
+			Code:  http.StatusInternalServerError,
+			Cause: err,
 		})
 	}
 	return sessionTTLHour

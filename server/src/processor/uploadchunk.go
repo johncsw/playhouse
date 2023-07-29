@@ -9,8 +9,8 @@ import (
 	"os"
 	"playhouse-server/env"
 	"playhouse-server/repo"
-	"playhouse-server/requestbody"
-	"playhouse-server/responsebody"
+	"playhouse-server/request"
+	"playhouse-server/response"
 	"playhouse-server/util"
 	"time"
 )
@@ -23,15 +23,15 @@ type UploadChunkProcessor struct {
 	URLToStream  string
 }
 
-func (p *UploadChunkProcessor) preProcess(resultPipe chan<- responsebody.UploadChunkWSBody) {
+func (p *UploadChunkProcessor) preProcess(resultPipe chan<- response.UploadChunkWSBody) {
 	urlToStream, err := p.setUpChunkStorageDirectory()
 	if err != nil || urlToStream == "" {
 		errMsg := fmt.Sprintf("failed to set up chunk storage directory. videoID=%v", p.VideoID)
 		if err != nil {
 			errMsg = err.Error()
 		}
-		resultPipe <- responsebody.UploadChunkWSBody{
-			Status:       responsebody.UploadChunkWSBodyStatusFailed,
+		resultPipe <- response.UploadChunkWSBody{
+			Status:       response.UploadChunkWSBodyStatusFailed,
 			ErrorMessage: errMsg,
 		}
 		return
@@ -87,11 +87,11 @@ func (p *UploadChunkProcessor) Process() {
 		for {
 			// the chunk metadata is sent first followed by its raw data, so we need to read the
 			// message twice in order to get both of them
-			b := &requestbody.UploadChunkWSBody{}
+			b := &request.UploadChunkWSBody{}
 			bodyErr := p.WSConn.ReadJSON(b)
 			if bodyErr != nil {
-				resultPipe <- responsebody.UploadChunkWSBody{
-					Status:       responsebody.UploadChunkWSBodyStatusFailed,
+				resultPipe <- response.UploadChunkWSBody{
+					Status:       response.UploadChunkWSBodyStatusFailed,
 					ErrorMessage: bodyErr.Error(),
 				}
 				return
@@ -99,15 +99,15 @@ func (p *UploadChunkProcessor) Process() {
 
 			msgType, rawData, rawDataErr := p.WSConn.ReadMessage()
 			if rawDataErr != nil {
-				resultPipe <- responsebody.UploadChunkWSBody{
-					Status:       responsebody.UploadChunkWSBodyStatusFailed,
+				resultPipe <- response.UploadChunkWSBody{
+					Status:       response.UploadChunkWSBodyStatusFailed,
 					ErrorMessage: rawDataErr.Error(),
 				}
 				return
 			}
 			if msgType != websocket.BinaryMessage {
-				resultPipe <- responsebody.UploadChunkWSBody{
-					Status:       responsebody.UploadChunkWSBodyStatusFailed,
+				resultPipe <- response.UploadChunkWSBody{
+					Status:       response.UploadChunkWSBodyStatusFailed,
 					ErrorMessage: "invalid message type",
 				}
 				return
@@ -121,8 +121,8 @@ func (p *UploadChunkProcessor) Process() {
 				case r := <-result:
 					resultPipe <- r
 				case <-timeout:
-					resultPipe <- responsebody.UploadChunkWSBody{
-						Status:       responsebody.UploadChunkWSBodyStatusFailed,
+					resultPipe <- response.UploadChunkWSBody{
+						Status:       response.UploadChunkWSBodyStatusFailed,
 						ErrorMessage: "Get timeout when saving chunk",
 					}
 					return
@@ -133,9 +133,9 @@ func (p *UploadChunkProcessor) Process() {
 }
 
 func (p *UploadChunkProcessor) setUpResultPipe(
-	preProcess func(chan<- responsebody.UploadChunkWSBody), postProcess func() error,
-	iterations int, start time.Time) (chan<- responsebody.UploadChunkWSBody, <-chan bool) {
-	resultPipe := make(chan responsebody.UploadChunkWSBody)
+	preProcess func(chan<- response.UploadChunkWSBody), postProcess func() error,
+	iterations int, start time.Time) (chan<- response.UploadChunkWSBody, <-chan bool) {
+	resultPipe := make(chan response.UploadChunkWSBody)
 	quit := make(chan bool)
 	go func() {
 		defer func() {
@@ -146,12 +146,12 @@ func (p *UploadChunkProcessor) setUpResultPipe(
 
 		for iterations > 0 {
 			r := <-resultPipe
-			if err := p.WSConn.WriteJSON(r); err != nil || r.Status == responsebody.UploadChunkWSBodyStatusFailed {
+			if err := p.WSConn.WriteJSON(r); err != nil || r.Status == response.UploadChunkWSBodyStatusFailed {
 				if err != nil {
 					util.LogError(err, "")
 				}
 
-				if r.Status == responsebody.UploadChunkWSBodyStatusFailed {
+				if r.Status == response.UploadChunkWSBodyStatusFailed {
 					jsonData, err := json.Marshal(r)
 					if err != nil {
 						util.LogError(err, "")
@@ -168,8 +168,8 @@ func (p *UploadChunkProcessor) setUpResultPipe(
 		var writeErr error
 		postProcessErr := postProcess()
 		if postProcessErr != nil {
-			writeErr = p.WSConn.WriteJSON(responsebody.UploadChunkWSBody{
-				Status:       responsebody.UploadChunkWSBodyStatusFailed,
+			writeErr = p.WSConn.WriteJSON(response.UploadChunkWSBody{
+				Status:       response.UploadChunkWSBodyStatusFailed,
 				ErrorMessage: postProcessErr.Error(),
 			})
 			if writeErr != nil {
@@ -178,8 +178,8 @@ func (p *UploadChunkProcessor) setUpResultPipe(
 			return
 		}
 
-		if writeErr = p.WSConn.WriteJSON(responsebody.UploadChunkWSBody{
-			Status: responsebody.UploadChunkWSBodyStatusCompleted,
+		if writeErr = p.WSConn.WriteJSON(response.UploadChunkWSBody{
+			Status: response.UploadChunkWSBodyStatusCompleted,
 		}); writeErr != nil {
 			util.LogError(writeErr, "")
 		}
@@ -189,8 +189,8 @@ func (p *UploadChunkProcessor) setUpResultPipe(
 	return resultPipe, quit
 }
 
-func (p *UploadChunkProcessor) saveToRepo(b *requestbody.UploadChunkWSBody, quit <-chan bool) <-chan responsebody.UploadChunkWSBody {
-	result := make(chan responsebody.UploadChunkWSBody)
+func (p *UploadChunkProcessor) saveToRepo(b *request.UploadChunkWSBody, quit <-chan bool) <-chan response.UploadChunkWSBody {
+	result := make(chan response.UploadChunkWSBody)
 	go func() {
 		select {
 		case <-quit:
@@ -199,16 +199,16 @@ func (p *UploadChunkProcessor) saveToRepo(b *requestbody.UploadChunkWSBody, quit
 			chunkRepo := repo.ChunkRepo()
 			err := chunkRepo.SaveUploadedChunk(p.VideoID, p.URLToStream, b, nil)
 			if err != nil {
-				result <- responsebody.UploadChunkWSBody{
-					Status:       responsebody.UploadChunkWSBodyStatusFailed,
+				result <- response.UploadChunkWSBody{
+					Status:       response.UploadChunkWSBodyStatusFailed,
 					Code:         b.Code,
 					Size:         b.Size,
 					ErrorMessage: err.Error(),
 				}
 				return
 			}
-			result <- responsebody.UploadChunkWSBody{
-				Status: responsebody.UploadChunkWSBodyStatusSuccess,
+			result <- response.UploadChunkWSBody{
+				Status: response.UploadChunkWSBodyStatusSuccess,
 				Code:   b.Code,
 				Size:   b.Size,
 			}

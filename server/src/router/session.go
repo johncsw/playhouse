@@ -4,7 +4,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"playhouse-server/auth"
-	"playhouse-server/responsebody"
+	"playhouse-server/response"
 )
 
 func newSessionRouter() *chi.Mux {
@@ -20,9 +20,9 @@ func newSessionHandler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		token := auth.CreateSessionToken()
-		wrapper := responsebody.Wrapper{Writer: w}
-		wrapper.Header(map[string]string{
+		builder := response.Builder{Writer: w}
+		builder.Header(map[string]string{
 			"Authorization": token,
-		}).Status(http.StatusCreated).RawBody(nil)
+		}).Status(http.StatusCreated).BuildWithBytes(nil)
 	}
 }

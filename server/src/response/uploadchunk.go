@@ -1,6 +1,6 @@
-package responsebody
+package response
 
-// "response" body from WebSocket for client messages about status of upload a chunk
+// UploadChunkWSBody represents the response to client about the status of uploading a chunk
 type UploadChunkWSBody struct {
 	Status       string `json:"status"`
 	Size         int    `json:"size"`

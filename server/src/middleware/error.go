@@ -6,26 +6,26 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"playhouse-server/responsebody"
+	"playhouse-server/response"
 )
 
 func ErrorHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				var responseErr responsebody.ResponseErr
+				var responseErr response.Error
 				switch e := err.(type) {
-				case responsebody.ResponseErr:
+				case response.Error:
 					responseErr = e
 				default:
 					errMessage := fmt.Sprintf("Unknown Error: %v", err)
-					responseErr = responsebody.ResponseErr{
-						Code:    http.StatusInternalServerError,
-						ErrBody: errors.New(errMessage),
+					responseErr = response.Error{
+						Code:  http.StatusInternalServerError,
+						Cause: errors.New(errMessage),
 					}
 				}
 
-				log.Print(responseErr.ErrBody.Error())
+				log.Print(responseErr.Cause.Error())
 
 				w.WriteHeader(responseErr.Code)
 				err := json.NewEncoder(w).Encode(map[string]string{"error": responseErr.Error()})

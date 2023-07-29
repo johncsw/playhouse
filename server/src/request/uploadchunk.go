@@ -1,4 +1,4 @@
-package requestbody
+package request
 
 type UploadChunkBody struct {
 	VideoID string `json:"videoID"`

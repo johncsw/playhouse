@@ -8,7 +8,7 @@ import (
 	"playhouse-server/env"
 	"playhouse-server/middleware"
 	"playhouse-server/repo"
-	"playhouse-server/responsebody"
+	"playhouse-server/response"
 	"strconv"
 )
 
@@ -32,9 +32,9 @@ func GetAllUploadedVideo() http.HandlerFunc {
 
 		videos, err := videoRepo.GetAllUploadedVideo(sessionID)
 		if err != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusBadRequest,
-				ErrBody: err,
+			panic(response.Error{
+				Code:  http.StatusBadRequest,
+				Cause: err,
 			})
 		}
 
@@ -47,8 +47,8 @@ func GetAllUploadedVideo() http.HandlerFunc {
 			})
 		}
 
-		wrapper := responsebody.Wrapper{Writer: w}
-		wrapper.Status(http.StatusOK).JsonListBodyFromMap(result)
+		builder := response.Builder{Writer: w}
+		builder.Status(http.StatusOK).BuildWithJsonList(result)
 	}
 }
 
@@ -56,32 +56,32 @@ func GetManifestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(chi.URLParam(r, "videoID"))
 		if convErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusBadRequest,
-				ErrBody: convErr,
+			panic(response.Error{
+				Code:  http.StatusBadRequest,
+				Cause: convErr,
 			})
 		}
 
 		videoRepo := repo.VideoRepo()
 		URLToStream, isTransCoded, videoErr := videoRepo.IsVideoAvailableToStream(videoID)
 		if videoErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusBadRequest,
-				ErrBody: videoErr,
+			panic(response.Error{
+				Code:  http.StatusBadRequest,
+				Cause: videoErr,
 			})
 		}
 
 		if URLToStream == "" {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusNotFound,
-				ErrBody: errors.New("video not found"),
+			panic(response.Error{
+				Code:  http.StatusNotFound,
+				Cause: errors.New("video not found"),
 			})
 		}
 
 		if !isTransCoded {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusServiceUnavailable,
-				ErrBody: errors.New("transcoding to the video is not finished yet"),
+			panic(response.Error{
+				Code:  http.StatusServiceUnavailable,
+				Cause: errors.New("transcoding to the video is not finished yet"),
 			})
 		}
 
@@ -95,32 +95,32 @@ func GetStreamingContentHanlder() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(chi.URLParam(r, "videoID"))
 		if convErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusBadRequest,
-				ErrBody: convErr,
+			panic(response.Error{
+				Code:  http.StatusBadRequest,
+				Cause: convErr,
 			})
 		}
 
 		videoRepo := repo.VideoRepo()
 		URLToStream, isTransCoded, videoErr := videoRepo.IsVideoAvailableToStream(videoID)
 		if videoErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusBadRequest,
-				ErrBody: videoErr,
+			panic(response.Error{
+				Code:  http.StatusBadRequest,
+				Cause: videoErr,
 			})
 		}
 
 		if URLToStream == "" {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusNotFound,
-				ErrBody: errors.New("video not found"),
+			panic(response.Error{
+				Code:  http.StatusNotFound,
+				Cause: errors.New("video not found"),
 			})
 		}
 
 		if !isTransCoded {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusServiceUnavailable,
-				ErrBody: errors.New("transcoding to the video is not finished yet"),
+			panic(response.Error{
+				Code:  http.StatusServiceUnavailable,
+				Cause: errors.New("transcoding to the video is not finished yet"),
 			})
 		}
 

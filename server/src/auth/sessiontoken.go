@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"playhouse-server/env"
 	"playhouse-server/repo"
-	"playhouse-server/responsebody"
+	"playhouse-server/response"
 )
 
 type JWTClaims struct {
@@ -27,9 +27,9 @@ func CreateSessionToken() string {
 	secret := env.JWT_SECRET()
 	tokenStr, err := token.SignedString([]byte(secret))
 	if err != nil {
-		panic(responsebody.ResponseErr{
-			Code:    http.StatusInternalServerError,
-			ErrBody: err,
+		panic(response.Error{
+			Code:  http.StatusInternalServerError,
+			Cause: err,
 		})
 	}
 
@@ -37,9 +37,9 @@ func CreateSessionToken() string {
 }
 
 func IsSessionTokenValid(tokenStr string) (bool, int) {
-	authError := responsebody.ResponseErr{
-		Code:    http.StatusForbidden,
-		ErrBody: errors.New("not a valid token"),
+	authError := response.Error{
+		Code:  http.StatusForbidden,
+		Cause: errors.New("not a valid token"),
 	}
 	if tokenStr == "" {
 		panic(authError)
@@ -52,9 +52,9 @@ func IsSessionTokenValid(tokenStr string) (bool, int) {
 	})
 
 	if err != nil {
-		panic(responsebody.ResponseErr{
-			Code:    http.StatusInternalServerError,
-			ErrBody: err,
+		panic(response.Error{
+			Code:  http.StatusInternalServerError,
+			Cause: err,
 		})
 	}
 

@@ -11,8 +11,8 @@ import (
 	"playhouse-server/model"
 	"playhouse-server/processor"
 	"playhouse-server/repo"
-	"playhouse-server/requestbody"
-	"playhouse-server/responsebody"
+	"playhouse-server/request"
+	"playhouse-server/response"
 	"playhouse-server/util"
 	"strconv"
 )
@@ -41,12 +41,12 @@ func newUploadRouter() *chi.Mux {
 func UploadRegistrationHandler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		b := &requestbody.UploadRegistrationBody{}
-		requestbody.ToRequestBody(b, r)
-		if requestbody.IsNotValid(b) {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusBadRequest,
-				ErrBody: errors.New("not a valid request body"),
+		b := &request.UploadRegistrationBody{}
+		request.ToRequestBody(b, r)
+		if request.IsNotValid(b) {
+			panic(response.Error{
+				Code:  http.StatusBadRequest,
+				Cause: errors.New("not a valid request body"),
 			})
 		}
 
@@ -70,15 +70,15 @@ func UploadRegistrationHandler() http.HandlerFunc {
 		})
 
 		if err != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusInternalServerError,
-				ErrBody: err,
+			panic(response.Error{
+				Code:  http.StatusInternalServerError,
+				Cause: err,
 			})
 		}
 
-		wrapper := responsebody.Wrapper{Writer: w}
+		builder := response.Builder{Writer: w}
 		videoID := strconv.Itoa(newVideo.ID)
-		wrapper.Status(http.StatusCreated).JsonBodyFromMap(map[string]any{
+		builder.Status(http.StatusCreated).BuildWithJson(map[string]any{
 			"videoID": videoID,
 		})
 	}
@@ -88,9 +88,9 @@ func GetChunkCodeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(r.URL.Query().Get("video-id"))
 		if convErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusInternalServerError,
-				ErrBody: convErr,
+			panic(response.Error{
+				Code:  http.StatusInternalServerError,
+				Cause: convErr,
 			})
 		}
 
@@ -103,9 +103,9 @@ func GetChunkCodeHandler() http.HandlerFunc {
 				errCode = http.StatusNotFound
 				err = errors.New("video not found")
 			}
-			panic(responsebody.ResponseErr{
-				Code:    errCode,
-				ErrBody: err,
+			panic(response.Error{
+				Code:  errCode,
+				Cause: err,
 			})
 		}
 		maxChunkSize := util.MaxChunkSize(videoSize)
@@ -113,14 +113,14 @@ func GetChunkCodeHandler() http.HandlerFunc {
 		chunkRepo := repo.ChunkRepo()
 		codes, dbErr := chunkRepo.GetChunkCodeByIsUploaded(videoID, false)
 		if dbErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusInternalServerError,
-				ErrBody: dbErr,
+			panic(response.Error{
+				Code:  http.StatusInternalServerError,
+				Cause: dbErr,
 			})
 		}
 
-		wrapper := responsebody.Wrapper{Writer: w}
-		wrapper.Status(http.StatusOK).JsonBodyFromMap(
+		builder := response.Builder{Writer: w}
+		builder.Status(http.StatusOK).BuildWithJson(
 			map[string]any{
 				"maxChunkSize": maxChunkSize,
 				"chunkCodes":   codes,
@@ -132,9 +132,9 @@ func ChunkUploadHandler(webSocketUpgrader *websocket.Upgrader) http.HandlerFunc 
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(r.URL.Query().Get("video-id"))
 		if convErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusInternalServerError,
-				ErrBody: convErr,
+			panic(response.Error{
+				Code:  http.StatusInternalServerError,
+				Cause: convErr,
 			})
 		}
 
@@ -148,17 +148,17 @@ func ChunkUploadHandler(webSocketUpgrader *websocket.Upgrader) http.HandlerFunc 
 				errCode = http.StatusBadRequest
 				errMsg = "not a valid video for upload"
 			}
-			panic(responsebody.ResponseErr{
-				Code:    errCode,
-				ErrBody: errors.New(errMsg),
+			panic(response.Error{
+				Code:  errCode,
+				Cause: errors.New(errMsg),
 			})
 		}
 
 		conn, socketErr := webSocketUpgrader.Upgrade(w, r, nil)
 		if socketErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusInternalServerError,
-				ErrBody: socketErr,
+			panic(response.Error{
+				Code:  http.StatusInternalServerError,
+				Cause: socketErr,
 			})
 		}
 
