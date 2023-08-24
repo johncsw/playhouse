@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"math"
+	"os"
+	"playhouse-server/env"
 	"playhouse-server/model"
 	"playhouse-server/request"
 	"playhouse-server/util"
@@ -143,4 +145,26 @@ func (r *videorepo) GetAllUploadedVideo(sessionID int) ([]model.Video, error) {
 	var videos []model.Video
 	result := db.Model(&model.Video{}).Select("id", "name").Where("session_id = ? AND is_deleted = false AND pending_chunks = 0", sessionID).Find(&videos)
 	return videos, result.Error
+}
+
+func (r *videorepo) GetChunkSavingDirURL(videoID int) (string, error) {
+	urlToStream, urlErr := r.GetVideoURLToStream(videoID)
+	if urlErr != nil {
+		return "", urlErr
+	}
+	return urlToStream, nil
+}
+
+func (r *videorepo) CreateChunkSavingDir(videoID int) (string, error) {
+	urlToStream := fmt.Sprintf("%v/%v", env.CHUNK_STORAGE_PATH(), videoID)
+	dirErr := os.Mkdir(urlToStream, 0755)
+	if dirErr != nil {
+		return "", dirErr
+	}
+	saveErr := r.SetVideoURLToStream(videoID, urlToStream)
+	if saveErr != nil {
+		return "", saveErr
+	}
+
+	return urlToStream, nil
 }

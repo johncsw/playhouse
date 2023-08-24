@@ -15,7 +15,7 @@ import (
 )
 
 type TranscodeVideoProcessor struct {
-	videoID int
+	VideoID int
 }
 
 const transcodingCommand = "ffmpeg -i %s %s"
@@ -38,7 +38,7 @@ type transcodeVideoOutput struct {
 
 func (p *TranscodeVideoProcessor) Process() {
 	start := time.Now()
-	log.Printf("Start transcoding videoID=%d\n", p.videoID)
+	log.Printf("Start transcoding VideoID=%d\n", p.VideoID)
 	checkOutput := p.checkVideoAndChunks()
 	didNotPass := !checkOutput.passCheck
 	if didNotPass {
@@ -65,14 +65,14 @@ func (p *TranscodeVideoProcessor) Process() {
 		util.LogError(markErr, "")
 	}
 
-	log.Printf("Finished transcoding video. videoID=%d elapsed=%v\n ", p.videoID, time.Since(start))
+	log.Printf("Finished transcoding video. VideoID=%d elapsed=%v\n ", p.VideoID, time.Since(start))
 }
 
 func (p *TranscodeVideoProcessor) checkVideoAndChunks() checkVideoAndChunkOutput {
 	output := checkVideoAndChunkOutput{passCheck: false}
 
 	videoRepo := repo.VideoRepo()
-	URLTostream, videoErr := videoRepo.IsVideoReadyToTranscode(p.videoID)
+	URLTostream, videoErr := videoRepo.IsVideoReadyToTranscode(p.VideoID)
 
 	if videoErr != nil || URLTostream == "" {
 		if videoErr != nil {
@@ -82,7 +82,7 @@ func (p *TranscodeVideoProcessor) checkVideoAndChunks() checkVideoAndChunkOutput
 	}
 
 	chunkRepo := repo.ChunkRepo()
-	chunkCodes, chunkErr := chunkRepo.GetChunkCodeByIsUploaded(p.videoID, true)
+	chunkCodes, chunkErr := chunkRepo.GetChunkCodeByIsUploaded(p.VideoID, true)
 	if chunkErr != nil {
 		output.err = chunkErr
 		return output
@@ -97,7 +97,7 @@ func (p *TranscodeVideoProcessor) checkVideoAndChunks() checkVideoAndChunkOutput
 func (p *TranscodeVideoProcessor) assembleChunks(input *checkVideoAndChunkOutput) assembleChunksOutput {
 
 	output := assembleChunksOutput{}
-	outputPath := fmt.Sprintf("%s/%d-out.mp4", input.videoPath, p.videoID)
+	outputPath := fmt.Sprintf("%s/%d-out.mp4", input.videoPath, p.VideoID)
 
 	_, err := os.Stat(outputPath)
 	if os.IsExist(err) {
@@ -117,7 +117,7 @@ func (p *TranscodeVideoProcessor) assembleChunks(input *checkVideoAndChunkOutput
 	defer func() { util.LogError(outputVideo.Close(), "") }()
 
 	for _, code := range input.chunkCodes {
-		chunkPath := fmt.Sprintf("%s/%d-%d.bin", input.videoPath, p.videoID, code)
+		chunkPath := fmt.Sprintf("%s/%d-%d.bin", input.videoPath, p.VideoID, code)
 		chunk, chunkErr := os.Open(chunkPath)
 		if chunkErr != nil {
 			output.err = createErr
@@ -157,12 +157,12 @@ func (p *TranscodeVideoProcessor) transcodeVideo(input *assembleChunksOutput) tr
 
 	scanner := bufio.NewScanner(stderr)
 	for scanner.Scan() {
-		log.Printf("transcoding video %d: %s\n", p.videoID, scanner.Text())
+		log.Printf("transcoding video %d: %s\n", p.VideoID, scanner.Text())
 	}
 
 	return output
 }
 
 func (p *TranscodeVideoProcessor) markVideoAsTranscoded() error {
-	return repo.VideoRepo().UpdateVideoAsTranscoded(p.videoID)
+	return repo.VideoRepo().UpdateVideoAsTranscoded(p.VideoID)
 }

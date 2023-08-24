@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"playhouse-server/env"
+	"playhouse-server/flow"
 	"playhouse-server/middleware"
 	"playhouse-server/model"
 	"playhouse-server/processor"
@@ -162,12 +163,18 @@ func chunkUploadHandler(webSocketUpgrader *websocket.Upgrader) http.HandlerFunc 
 			})
 		}
 
-		p := processor.UploadChunkProcessor{
-			WSConn:       conn,
-			VideoID:      videoID,
-			NumsOfChunks: int(v.PendingChunks),
-			SessionID:    sessionID,
-		}
-		p.Process()
+		go func() {
+			success := <-flow.UploadChunk(&flow.UploadChunkSupport{
+				WebsocketConn: conn,
+				VideoID:       videoID,
+				NumsOfChunks:  int(v.PendingChunks),
+				SessionID:     sessionID,
+			})
+			// todo: update pending chunks for the video
+			if success {
+				p := processor.TranscodeVideoProcessor{VideoID: videoID}
+				p.Process()
+			}
+		}()
 	}
 }
