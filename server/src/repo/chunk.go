@@ -83,7 +83,7 @@ func (r *chunkrepo) SaveUploadedChunk(videoID int, urlToStream string, b *reques
 	return nil
 }
 
-func (r *chunkrepo) GetNumberOfNotUploadedChunks(videoID int, tx *gorm.DB) (int, error) {
+func (r *chunkrepo) GetNumberUploadedChunks(videoID int, tx *gorm.DB) (int, error) {
 	var executor *gorm.DB
 	if tx == nil {
 		executor = db

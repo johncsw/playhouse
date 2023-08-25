@@ -7,7 +7,7 @@ import (
 	"playhouse-server/request"
 )
 
-type UploadChunkSupport struct {
+type UploadChunkFlowSupport struct {
 	WebsocketConn     *websocket.Conn
 	VideoID           int
 	SessionID         int
@@ -15,7 +15,7 @@ type UploadChunkSupport struct {
 	ChunkSavingDirURL string
 }
 
-func UploadChunk(support *UploadChunkSupport) <-chan bool {
+func UploadChunk(support *UploadChunkFlowSupport) <-chan bool {
 	flowSuccess := make(chan bool)
 	go func() {
 		chunkSavingDirURL, prepareErr := prepareChunkSavingDirURL(support)
@@ -58,7 +58,7 @@ func UploadChunk(support *UploadChunkSupport) <-chan bool {
 	return flowSuccess
 }
 
-func prepareChunkSavingDirURL(support *UploadChunkSupport) (string, error) {
+func prepareChunkSavingDirURL(support *UploadChunkFlowSupport) (string, error) {
 	existingURL, dirErr := repo.VideoRepo().GetChunkSavingDirURL(support.VideoID)
 	if dirErr != nil {
 		return "", dirErr

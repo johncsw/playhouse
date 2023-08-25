@@ -10,7 +10,7 @@ import (
 )
 
 type chunkConsumer struct {
-	uploadChunkSupport *UploadChunkSupport
+	uploadChunkSupport *UploadChunkFlowSupport
 	consumingQueue     <-chan request.UploadChunkWebsocketBody
 }
 

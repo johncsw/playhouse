@@ -9,7 +9,7 @@ import (
 )
 
 type successHandler struct {
-	support              *UploadChunkSupport
+	support              *UploadChunkFlowSupport
 	chunkSuccessReceiver <-chan response.UploadChunkWebsocketBody
 	flowSuccessSender    chan<- bool
 }

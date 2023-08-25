@@ -126,7 +126,7 @@ func (r *videorepo) IsVideoAvailableToStream(videoID int) (string, bool, error) 
 	return v.URLToStream, v.IsTranscoded, nil
 }
 
-func (r *videorepo) UpdateVideoAsTranscoded(videoID int) error {
+func (r *videorepo) UpdateVideoAsTranscodeComplete(videoID int) error {
 	result := db.Model(&model.Video{}).Where("id = ?", videoID).Update("is_transcoded", true)
 	err := result.Error
 	if err != nil {

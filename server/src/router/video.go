@@ -113,14 +113,14 @@ func getStreamingContentHandler() http.HandlerFunc {
 		if URLToStream == "" {
 			panic(response.Error{
 				Code:  http.StatusNotFound,
-				Cause: errors.New("video not found"),
+				Cause: errors.New(fmt.Sprintf("video not found. videoID=%d", videoID)),
 			})
 		}
 
 		if !isTransCoded {
 			panic(response.Error{
 				Code:  http.StatusServiceUnavailable,
-				Cause: errors.New("transcoding to the video is not finished yet"),
+				Cause: errors.New(fmt.Sprintf("transcoding to the video is not finished yet. videoID=%d", videoID)),
 			})
 		}
 

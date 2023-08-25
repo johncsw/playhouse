@@ -9,7 +9,7 @@ import (
 )
 
 type chunkProducer struct {
-	uploadChunkSupport *UploadChunkSupport
+	uploadChunkSupport *UploadChunkFlowSupport
 	producingQueue     chan<- request.UploadChunkWebsocketBody
 }
 

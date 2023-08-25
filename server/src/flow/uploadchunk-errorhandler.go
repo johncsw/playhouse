@@ -7,7 +7,7 @@ import (
 )
 
 type errorHandler struct {
-	support             *UploadChunkSupport
+	support             *UploadChunkFlowSupport
 	consumerErrReceiver <-chan error
 	producerErrReceiver <-chan error
 	flowSuccessSender   chan<- bool
@@ -34,7 +34,7 @@ func (h *errorHandler) listen() {
 	}()
 }
 
-func report(support *UploadChunkSupport, err error) {
+func report(support *UploadChunkFlowSupport, err error) {
 	writeErr := support.WebsocketConn.WriteJSON(response.UploadChunkWebsocketBody{
 		Status:       response.UploadChunkStatusFailed,
 		ErrorMessage: err.Error(),

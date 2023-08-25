@@ -5,12 +5,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
+	"log"
 	"net/http"
 	"playhouse-server/env"
 	"playhouse-server/flow"
 	"playhouse-server/middleware"
 	"playhouse-server/model"
-	"playhouse-server/processor"
 	"playhouse-server/repo"
 	"playhouse-server/request"
 	"playhouse-server/response"
@@ -164,16 +164,19 @@ func chunkUploadHandler(webSocketUpgrader *websocket.Upgrader) http.HandlerFunc 
 		}
 
 		go func() {
-			success := <-flow.UploadChunk(&flow.UploadChunkSupport{
+			success := <-flow.UploadChunk(&flow.UploadChunkFlowSupport{
 				WebsocketConn: conn,
 				VideoID:       videoID,
 				NumsOfChunks:  int(v.PendingChunks),
 				SessionID:     sessionID,
 			})
-			// todo: update pending chunks for the video
-			if success {
-				p := processor.TranscodeVideoProcessor{VideoID: videoID}
-				p.Process()
+			newPendingChunks := flow.UpdatePendingChunks(videoID, int(v.PendingChunks))
+			if success && newPendingChunks == 0 {
+				flow.TranscodeVideo(videoID, sessionID)
+				markErr := repo.VideoRepo().UpdateVideoAsTranscodeComplete(videoID)
+				if markErr != nil {
+					log.Printf("failed to mark video as transcode complete. videoID=%d sessionID=%d\n", videoID, sessionID)
+				}
 			}
 		}()
 	}
