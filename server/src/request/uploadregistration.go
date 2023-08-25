@@ -1,4 +1,4 @@
-package requestbody
+package request
 
 var validVideoTypes = map[string]bool{
 	"video/mp4": true,

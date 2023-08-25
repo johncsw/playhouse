@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"net/http"
-	"playhouse-server/auth"
+	"playhouse-server/env"
 	"playhouse-server/middleware"
-	"playhouse-server/repository"
-	"playhouse-server/responsebody"
-	"playhouse-server/util"
+	"playhouse-server/repo"
+	"playhouse-server/response"
 	"strconv"
 )
 
@@ -17,73 +16,72 @@ func newVideoRouter() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.AuthHandler)
-	repoFact := repository.NewFactory()
-	authenticator := auth.NewSessionAuthenticator()
 
 	r.Group(func(r chi.Router) {
-		r.Get("/streaming/{videoID}", GetManifestHandler(repoFact))
-		r.Get("/streaming/{videoID}/{m4sFileName}", GetStreamingContentHanlder(repoFact))
-		r.Get("/all", GetAllUploadedVideo(repoFact, authenticator))
+		r.Get("/streaming/{videoID}", getManifestHandler())
+		r.Get("/streaming/{videoID}/{m4sFileName}", getStreamingContentHandler())
+		r.Get("/all", getAllUploadedVideo())
 	})
 	return r
 }
 
-func GetAllUploadedVideo(repoFact *repository.Factory, authenticator *auth.SessionAuthenticator) http.HandlerFunc {
+func getAllUploadedVideo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		videoRepo := repoFact.NewVideoRepo()
-		sessionID := authenticator.GetSessionId(r)
+		videoRepo := repo.VideoRepo()
+		sessionID := r.Context().Value("sessionID").(int)
+
 		videos, err := videoRepo.GetAllUploadedVideo(sessionID)
 		if err != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusBadRequest,
-				ErrBody: err,
+			panic(response.Error{
+				Code:  http.StatusBadRequest,
+				Cause: err,
 			})
 		}
 
 		var result []map[string]any
 		for _, v := range videos {
-			link := fmt.Sprintf("%s/video/%d", util.NewEnv().CLIENT_URL(), v.ID)
+			link := fmt.Sprintf("%s/video/%d", env.CLIENT_URL(), v.ID)
 			result = append(result, map[string]any{
 				"name": v.Name,
 				"link": link,
 			})
 		}
 
-		wrapper := responsebody.Wrapper{Writer: w}
-		wrapper.Status(http.StatusOK).JsonListBodyFromMap(result)
+		builder := response.Builder{Writer: w}
+		builder.Status(http.StatusOK).BuildWithJsonList(result)
 	}
 }
 
-func GetManifestHandler(repoFact *repository.Factory) http.HandlerFunc {
+func getManifestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(chi.URLParam(r, "videoID"))
 		if convErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusBadRequest,
-				ErrBody: convErr,
+			panic(response.Error{
+				Code:  http.StatusBadRequest,
+				Cause: convErr,
 			})
 		}
 
-		videoRepo := repoFact.NewVideoRepo()
+		videoRepo := repo.VideoRepo()
 		URLToStream, isTransCoded, videoErr := videoRepo.IsVideoAvailableToStream(videoID)
 		if videoErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusBadRequest,
-				ErrBody: videoErr,
+			panic(response.Error{
+				Code:  http.StatusBadRequest,
+				Cause: videoErr,
 			})
 		}
 
 		if URLToStream == "" {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusNotFound,
-				ErrBody: errors.New("video not found"),
+			panic(response.Error{
+				Code:  http.StatusNotFound,
+				Cause: errors.New("video not found"),
 			})
 		}
 
 		if !isTransCoded {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusServiceUnavailable,
-				ErrBody: errors.New("transcoding to the video is not finished yet"),
+			panic(response.Error{
+				Code:  http.StatusServiceUnavailable,
+				Cause: errors.New("transcoding to the video is not finished yet"),
 			})
 		}
 
@@ -93,36 +91,36 @@ func GetManifestHandler(repoFact *repository.Factory) http.HandlerFunc {
 	}
 }
 
-func GetStreamingContentHanlder(repoFact *repository.Factory) http.HandlerFunc {
+func getStreamingContentHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(chi.URLParam(r, "videoID"))
 		if convErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusBadRequest,
-				ErrBody: convErr,
+			panic(response.Error{
+				Code:  http.StatusBadRequest,
+				Cause: convErr,
 			})
 		}
 
-		videoRepo := repoFact.NewVideoRepo()
+		videoRepo := repo.VideoRepo()
 		URLToStream, isTransCoded, videoErr := videoRepo.IsVideoAvailableToStream(videoID)
 		if videoErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusBadRequest,
-				ErrBody: videoErr,
+			panic(response.Error{
+				Code:  http.StatusBadRequest,
+				Cause: videoErr,
 			})
 		}
 
 		if URLToStream == "" {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusNotFound,
-				ErrBody: errors.New("video not found"),
+			panic(response.Error{
+				Code:  http.StatusNotFound,
+				Cause: errors.New(fmt.Sprintf("video not found. videoID=%d", videoID)),
 			})
 		}
 
 		if !isTransCoded {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusServiceUnavailable,
-				ErrBody: errors.New("transcoding to the video is not finished yet"),
+			panic(response.Error{
+				Code:  http.StatusServiceUnavailable,
+				Cause: errors.New(fmt.Sprintf("transcoding to the video is not finished yet. videoID=%d", videoID)),
 			})
 		}
 

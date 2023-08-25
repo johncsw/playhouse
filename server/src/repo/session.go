@@ -1,12 +1,12 @@
-package repository
+package repo
 
 import (
 	"errors"
 	"gorm.io/gorm"
 	"net/http"
+	"playhouse-server/env"
 	"playhouse-server/model"
-	"playhouse-server/responsebody"
-	"playhouse-server/util"
+	"playhouse-server/response"
 	"time"
 )
 
@@ -16,7 +16,6 @@ type sessionrepo struct {
 
 func (r *sessionrepo) NewSession() *model.Session {
 	now := time.Now().UTC()
-	env := util.NewEnv()
 	sessionTTLHour := env.SESSION_TTL_HOUR()
 	due := now.Add(time.Hour * time.Duration(sessionTTLHour))
 
@@ -25,12 +24,12 @@ func (r *sessionrepo) NewSession() *model.Session {
 		DueAt:       &due,
 		CreatedAt:   &now,
 	}
-	result := r.db.Create(s)
+	result := db.Create(s)
 
 	if err := result.Error; err != nil {
-		panic(responsebody.ResponseErr{
-			Code:    http.StatusInternalServerError,
-			ErrBody: err,
+		panic(response.Error{
+			Code:  http.StatusInternalServerError,
+			Cause: err,
 		})
 	}
 
@@ -44,15 +43,15 @@ func (r *sessionrepo) IsSessionAvailable(ID int) bool {
 
 	var s model.Session
 
-	if err := r.db.First(&s, ID).Error; err != nil {
+	if err := db.First(&s, ID).Error; err != nil {
 		code := http.StatusInternalServerError
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			code = http.StatusForbidden
 		}
 
-		panic(responsebody.ResponseErr{
-			Code:    code,
-			ErrBody: errors.New("session not found"),
+		panic(response.Error{
+			Code:  code,
+			Cause: errors.New("session not found"),
 		})
 	}
 

@@ -5,14 +5,15 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
+	"log"
 	"net/http"
-	"playhouse-server/auth"
+	"playhouse-server/env"
+	"playhouse-server/flow"
 	"playhouse-server/middleware"
 	"playhouse-server/model"
-	"playhouse-server/processor"
-	"playhouse-server/repository"
-	"playhouse-server/requestbody"
-	"playhouse-server/responsebody"
+	"playhouse-server/repo"
+	"playhouse-server/request"
+	"playhouse-server/response"
 	"playhouse-server/util"
 	"strconv"
 )
@@ -22,50 +23,45 @@ func newUploadRouter() *chi.Mux {
 
 	r.Use(middleware.AuthHandler)
 
-	repoFact := repository.NewFactory()
-	authenticator := auth.NewSessionAuthenticator()
 	webSocketUpgrader := &websocket.Upgrader{
 		ReadBufferSize:  2 * util.MB,
 		WriteBufferSize: 1 * util.KB,
 		CheckOrigin: func(r *http.Request) bool {
-			return r.Header.Get("Origin") == util.NewEnv().CORS_ALLOWED_WEBSITE()
+			return r.Header.Get("Origin") == env.CORS_ALLOWED_WEBSITE()
 		},
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Post("/register", UploadRegistrationHandler(repoFact, authenticator))
-		r.Get("/chunk-code", GetChunkCodeHandler(repoFact))
-		r.Get("/chunks", ChunkUploadHandler(repoFact, authenticator, webSocketUpgrader))
+		r.Post("/register", uploadRegistrationHandler())
+		r.Get("/chunk-code", getChunkCodeHandler())
+		r.Get("/chunks", chunkUploadHandler(webSocketUpgrader))
 	})
 	return r
 }
 
-func UploadRegistrationHandler(
-	repoFact *repository.Factory, authenticator *auth.SessionAuthenticator) http.HandlerFunc {
+func uploadRegistrationHandler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		b := &requestbody.UploadRegistrationBody{}
-		requestbody.ToRequestBody(b, r)
-		if requestbody.IsNotValid(b) {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusBadRequest,
-				ErrBody: errors.New("not a valid request body"),
+		b := &request.UploadRegistrationBody{}
+		request.ToRequestBody(b, r)
+		if request.IsNotValid(b) {
+			panic(response.Error{
+				Code:  http.StatusBadRequest,
+				Cause: errors.New("not a valid request body"),
 			})
 		}
 
 		var newVideo model.Video
-		sessionID := authenticator.GetSessionId(r)
-
-		transaction := repoFact.NewTransaction()
-		err := transaction.Execute(func(tx *gorm.DB) error {
-			videoRepo := repoFact.NewVideoRepo()
+		sessionID := r.Context().Value("sessionID").(int)
+		err := repo.NewTransaction(func(tx *gorm.DB) error {
+			videoRepo := repo.VideoRepo()
 
 			v, verr := videoRepo.NewVideo(b, sessionID, tx)
 			if verr != nil {
 				return verr
 			}
 
-			chunkRepo := repoFact.NewChunkRepo()
+			chunkRepo := repo.ChunkRepo()
 			if cerr := chunkRepo.NewChunks(v, tx); cerr != nil {
 				return cerr
 			}
@@ -75,31 +71,31 @@ func UploadRegistrationHandler(
 		})
 
 		if err != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusInternalServerError,
-				ErrBody: err,
+			panic(response.Error{
+				Code:  http.StatusInternalServerError,
+				Cause: err,
 			})
 		}
 
-		wrapper := responsebody.Wrapper{Writer: w}
+		builder := response.Builder{Writer: w}
 		videoID := strconv.Itoa(newVideo.ID)
-		wrapper.Status(http.StatusCreated).JsonBodyFromMap(map[string]any{
+		builder.Status(http.StatusCreated).BuildWithJson(map[string]any{
 			"videoID": videoID,
 		})
 	}
 }
 
-func GetChunkCodeHandler(repoFact *repository.Factory) http.HandlerFunc {
+func getChunkCodeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(r.URL.Query().Get("video-id"))
 		if convErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusInternalServerError,
-				ErrBody: convErr,
+			panic(response.Error{
+				Code:  http.StatusInternalServerError,
+				Cause: convErr,
 			})
 		}
 
-		videoRepo := repoFact.NewVideoRepo()
+		videoRepo := repo.VideoRepo()
 		videoSize, videoErr := videoRepo.GetVideoSize(videoID)
 		if videoErr != nil {
 			errCode := http.StatusInternalServerError
@@ -108,24 +104,24 @@ func GetChunkCodeHandler(repoFact *repository.Factory) http.HandlerFunc {
 				errCode = http.StatusNotFound
 				err = errors.New("video not found")
 			}
-			panic(responsebody.ResponseErr{
-				Code:    errCode,
-				ErrBody: err,
+			panic(response.Error{
+				Code:  errCode,
+				Cause: err,
 			})
 		}
 		maxChunkSize := util.MaxChunkSize(videoSize)
 
-		chunkRepo := repoFact.NewChunkRepo()
+		chunkRepo := repo.ChunkRepo()
 		codes, dbErr := chunkRepo.GetChunkCodeByIsUploaded(videoID, false)
 		if dbErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusInternalServerError,
-				ErrBody: dbErr,
+			panic(response.Error{
+				Code:  http.StatusInternalServerError,
+				Cause: dbErr,
 			})
 		}
 
-		wrapper := responsebody.Wrapper{Writer: w}
-		wrapper.Status(http.StatusOK).JsonBodyFromMap(
+		builder := response.Builder{Writer: w}
+		builder.Status(http.StatusOK).BuildWithJson(
 			map[string]any{
 				"maxChunkSize": maxChunkSize,
 				"chunkCodes":   codes,
@@ -133,18 +129,18 @@ func GetChunkCodeHandler(repoFact *repository.Factory) http.HandlerFunc {
 	}
 }
 
-func ChunkUploadHandler(repoFact *repository.Factory, authenticator *auth.SessionAuthenticator, webSocketUpgrader *websocket.Upgrader) http.HandlerFunc {
+func chunkUploadHandler(webSocketUpgrader *websocket.Upgrader) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		videoID, convErr := strconv.Atoi(r.URL.Query().Get("video-id"))
 		if convErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusInternalServerError,
-				ErrBody: convErr,
+			panic(response.Error{
+				Code:  http.StatusInternalServerError,
+				Cause: convErr,
 			})
 		}
-		sessionID := authenticator.GetSessionId(r)
 
-		videoRepo := repoFact.NewVideoRepo()
+		sessionID := r.Context().Value("sessionID").(int)
+		videoRepo := repo.VideoRepo()
 		v, videoErr := videoRepo.GetPendingUploadVideo(videoID, sessionID)
 		if videoErr != nil {
 			errCode := http.StatusInternalServerError
@@ -153,27 +149,35 @@ func ChunkUploadHandler(repoFact *repository.Factory, authenticator *auth.Sessio
 				errCode = http.StatusBadRequest
 				errMsg = "not a valid video for upload"
 			}
-			panic(responsebody.ResponseErr{
-				Code:    errCode,
-				ErrBody: errors.New(errMsg),
+			panic(response.Error{
+				Code:  errCode,
+				Cause: errors.New(errMsg),
 			})
 		}
 
 		conn, socketErr := webSocketUpgrader.Upgrade(w, r, nil)
 		if socketErr != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusInternalServerError,
-				ErrBody: socketErr,
+			panic(response.Error{
+				Code:  http.StatusInternalServerError,
+				Cause: socketErr,
 			})
 		}
 
-		p := processor.UploadChunkProcessor{
-			WSConn:       conn,
-			VideoID:      videoID,
-			RepoFact:     repoFact,
-			NumsOfChunks: int(v.PendingChunks),
-			SessionID:    sessionID,
-		}
-		p.Process()
+		go func() {
+			success := <-flow.UploadChunk(&flow.UploadChunkFlowSupport{
+				WebsocketConn: conn,
+				VideoID:       videoID,
+				NumsOfChunks:  int(v.PendingChunks),
+				SessionID:     sessionID,
+			})
+			newPendingChunks := flow.UpdatePendingChunks(videoID, int(v.PendingChunks))
+			if success && newPendingChunks == 0 {
+				flow.TranscodeVideo(videoID, sessionID)
+				markErr := repo.VideoRepo().UpdateVideoAsTranscodeComplete(videoID)
+				if markErr != nil {
+					log.Printf("failed to mark video as transcode complete. videoID=%d sessionID=%d\n", videoID, sessionID)
+				}
+			}
+		}()
 	}
 }

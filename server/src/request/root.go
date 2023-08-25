@@ -1,10 +1,10 @@
-package requestbody
+package request
 
 import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"playhouse-server/responsebody"
+	"playhouse-server/response"
 )
 
 type RequestBody interface {
@@ -20,9 +20,9 @@ func ToRequestBody[T RequestBody](b *T, r *http.Request) {
 	defer func(bodyStreamer io.ReadCloser) {
 		err := bodyStreamer.Close()
 		if err != nil {
-			panic(responsebody.ResponseErr{
-				Code:    http.StatusInternalServerError,
-				ErrBody: err,
+			panic(response.Error{
+				Code:  http.StatusInternalServerError,
+				Cause: err,
 			})
 		}
 	}(bodyStreamer)
@@ -30,9 +30,9 @@ func ToRequestBody[T RequestBody](b *T, r *http.Request) {
 	decoder := json.NewDecoder(bodyStreamer)
 
 	if err := decoder.Decode(b); err != nil {
-		panic(responsebody.ResponseErr{
-			Code:    http.StatusInternalServerError,
-			ErrBody: err,
+		panic(response.Error{
+			Code:  http.StatusInternalServerError,
+			Cause: err,
 		})
 	}
 }
