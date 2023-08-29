@@ -11,7 +11,7 @@ import (
 
 type chunkConsumer struct {
 	uploadChunkSupport *UploadChunkFlowSupport
-	consumingQueue     <-chan request.UploadChunkWebsocketBody
+	consumingQueue     <-chan *request.UploadChunkWebsocketBody
 }
 
 func (c *chunkConsumer) start() (<-chan response.UploadChunkWebsocketBody, <-chan error) {
@@ -36,11 +36,11 @@ func (c *chunkConsumer) start() (<-chan response.UploadChunkWebsocketBody, <-cha
 	return successCh, consumerErrCh
 }
 
-func (c *chunkConsumer) consume(chunkBody request.UploadChunkWebsocketBody, quit chan<- error, successCh chan<- response.UploadChunkWebsocketBody) {
+func (c *chunkConsumer) consume(chunkBody *request.UploadChunkWebsocketBody, quit chan<- error, successCh chan<- response.UploadChunkWebsocketBody) {
 	go func() {
 		support := c.uploadChunkSupport
 		log.Printf("saving chunks. code=%v videoID=%v sessionID=%v\n", chunkBody.Code, support.VideoID, support.SessionID)
-		saveErr := repo.ChunkRepo().SaveUploadedChunk(support.VideoID, support.ChunkSavingDirURL, &chunkBody, nil)
+		saveErr := repo.ChunkRepo().SaveUploadedChunk(support.VideoID, support.ChunkSavingDirURL, chunkBody, nil)
 		if saveErr != nil {
 			quit <- saveErr
 			return

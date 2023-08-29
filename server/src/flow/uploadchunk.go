@@ -26,7 +26,7 @@ func UploadChunk(support *UploadChunkFlowSupport) <-chan bool {
 
 		support.ChunkSavingDirURL = chunkSavingDirURL
 
-		chunkQueue := make(chan request.UploadChunkWebsocketBody)
+		chunkQueue := make(chan *request.UploadChunkWebsocketBody)
 		// produce chunks by receiving them from websocket
 		producer := chunkProducer{
 			producingQueue:     chunkQueue,

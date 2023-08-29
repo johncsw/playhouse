@@ -10,7 +10,7 @@ import (
 
 type chunkProducer struct {
 	uploadChunkSupport *UploadChunkFlowSupport
-	producingQueue     chan<- request.UploadChunkWebsocketBody
+	producingQueue     chan<- *request.UploadChunkWebsocketBody
 }
 
 func (p *chunkProducer) start() <-chan error {
@@ -64,7 +64,7 @@ func (p *chunkProducer) produce(producerErrSender chan<- error) {
 				return
 			}
 			chunkBody.Content = chunkBin
-			p.producingQueue <- chunkBody
+			p.producingQueue <- &chunkBody
 			pendingChunks--
 			log.Printf("chunk uploaded. videoID=%v sessionID=%v chunkCode=%v", support.VideoID, support.SessionID, chunkBody.Code)
 		}
