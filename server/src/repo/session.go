@@ -55,7 +55,13 @@ func (r *sessionrepo) IsSessionAvailable(ID int) bool {
 		})
 	}
 
-	isNotDue := s.DueAt.After(time.Now().UTC())
+	isDue := time.Now().UTC().After(*s.DueAt)
+	if isDue {
+		panic(response.Error{
+			Code:  http.StatusForbidden,
+			Cause: errors.New("session expired"),
+		})
+	}
 
-	return isNotDue && s.IsAvailable
+	return s.IsAvailable
 }

@@ -37,12 +37,11 @@ func CreateSessionToken() string {
 }
 
 func IsSessionTokenValid(tokenStr string) (bool, int) {
-	authError := response.Error{
-		Code:  http.StatusForbidden,
-		Cause: errors.New("not a valid token"),
-	}
 	if tokenStr == "" {
-		panic(authError)
+		panic(response.Error{
+			Code:  http.StatusForbidden,
+			Cause: errors.New("not a valid token"),
+		})
 	}
 
 	secret := env.JWT_SECRET()
@@ -60,10 +59,13 @@ func IsSessionTokenValid(tokenStr string) (bool, int) {
 
 	if claims, ok := token.Claims.(*JWTClaims); ok && token.Valid {
 		sessionRepo := repo.SessionRepo()
-		isSessionValid := sessionRepo.IsSessionAvailable(claims.SessionID)
-		return isSessionValid, claims.SessionID
+		isAvailable := sessionRepo.IsSessionAvailable(claims.SessionID)
+		return isAvailable, claims.SessionID
 	} else {
-		panic(authError)
+		panic(response.Error{
+			Code:  http.StatusForbidden,
+			Cause: errors.New("token is not available"),
+		})
 	}
 
 	return false, -1
