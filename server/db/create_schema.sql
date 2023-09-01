@@ -33,3 +33,9 @@ create table if not exists chunk(
         session_id int references session(id) on delete set null on update no action,
         primary key (video_id, code)
 );
+
+create table if not exists "user" (
+       id           serial primary key,
+       created_at   timestamp not null default current_timestamp(),
+       email string not null check (length(email) > 0)
+);
