@@ -43,3 +43,4 @@ services:
       retries: 3
 networks:
   playhouse-net:
+    driver: bridge
