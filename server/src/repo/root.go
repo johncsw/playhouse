@@ -25,9 +25,9 @@ func Init() {
 
 	result := connection.Raw("select 1;")
 	if result.Error != nil {
-		panic(fmt.Sprintf("Fail to connect to database: %v", result.Error))
+		panic(fmt.Sprintf("fail to connect to database: %v", result.Error))
 	} else {
-		log.Println("Database connection successful.")
+		log.Println("database connection successful.")
 	}
 
 	db = connection

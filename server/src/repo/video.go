@@ -47,7 +47,7 @@ func (r *videorepo) GetVideoSize(id int) (int, error) {
 
 func (r *videorepo) GetPendingUploadVideo(videoID int, sessionID int) (*model.Video, error) {
 	var v model.Video
-	result := db.Model(&model.Video{}).Select("pending_chunks").Where("id = ? AND session_id = ? AND is_deleted = false AND pending_chunks > 0 AND is_transcoded = false", videoID, sessionID).First(&v)
+	result := db.Model(&model.Video{}).Select("pending_chunks, size").Where("id = ? AND session_id = ? AND is_deleted = false AND pending_chunks > 0 AND is_transcoded = false", videoID, sessionID).First(&v)
 	return &v, result.Error
 }
 

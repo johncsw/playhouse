@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
@@ -16,6 +17,7 @@ import (
 	"playhouse-server/response"
 	"playhouse-server/util"
 	"strconv"
+	"sync/atomic"
 )
 
 func newUploadRouter() *chi.Mux {
@@ -155,6 +157,14 @@ func chunkUploadHandler(webSocketUpgrader *websocket.Upgrader) http.HandlerFunc 
 			})
 		}
 
+		currentUploads := atomic.LoadInt32(&flow.AllowedUploads)
+		if currentUploads >= 2 {
+			panic(response.Error{
+				Code:  http.StatusServiceUnavailable,
+				Cause: errors.New(fmt.Sprintf("fail to upload video. only two uploads are allowed at a time. videoID=%v sessionID=%v", videoID, sessionID)),
+			})
+		}
+
 		conn, socketErr := webSocketUpgrader.Upgrade(w, r, nil)
 		if socketErr != nil {
 			panic(response.Error{
@@ -163,10 +173,13 @@ func chunkUploadHandler(webSocketUpgrader *websocket.Upgrader) http.HandlerFunc 
 			})
 		}
 
+		atomic.AddInt32(&flow.AllowedUploads, 1)
 		go func() {
+			defer atomic.AddInt32(&flow.AllowedUploads, -1)
 			success := <-flow.UploadChunk(&flow.UploadChunkFlowSupport{
 				WebsocketConn: conn,
 				VideoID:       videoID,
+				VideoSize:     v.Size,
 				NumsOfChunks:  int(v.PendingChunks),
 				SessionID:     sessionID,
 			})

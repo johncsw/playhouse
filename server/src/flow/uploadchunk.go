@@ -12,6 +12,7 @@ type UploadChunkFlowSupport struct {
 	VideoID           int
 	SessionID         int
 	NumsOfChunks      int
+	VideoSize         int
 	ChunkSavingDirURL string
 }
 

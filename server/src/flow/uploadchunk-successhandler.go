@@ -2,6 +2,7 @@ package flow
 
 import (
 	"fmt"
+	"github.com/gorilla/websocket"
 	"log"
 	"playhouse-server/response"
 	"playhouse-server/util"
@@ -35,6 +36,12 @@ func (h *successHandler) listen() {
 			Status: response.UploadChunkStatusCompleted,
 		}); completeErr != nil {
 			report(h.support, completeErr)
+			return
+		}
+
+		msgErr := h.support.WebsocketConn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+		if msgErr != nil {
+			util.LogError(msgErr, "")
 			return
 		}
 
