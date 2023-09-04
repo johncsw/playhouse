@@ -41,6 +41,7 @@ var (
 	sessionRepo *sessionrepo
 	videoRepo   *videorepo
 	chunkRepo   *chunkrepo
+	userRepo    *userrepo
 )
 
 func SessionRepo() *sessionrepo {
@@ -62,4 +63,11 @@ func ChunkRepo() *chunkrepo {
 		chunkRepo = &chunkrepo{}
 	}
 	return chunkRepo
+}
+
+func UserRepo() *userrepo {
+	if userRepo == nil {
+		userRepo = &userrepo{}
+	}
+	return userRepo
 }

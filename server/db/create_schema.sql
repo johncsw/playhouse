@@ -6,7 +6,8 @@ create table if not exists session(
     id serial primary key,
     is_available bool not null default false,
     due_at timestamp not null,
-    created_at timestamp not null default current_timestamp()
+    created_at timestamp not null default current_timestamp(),
+    user_id int references "user"(id) on delete cascade on update no action
 );
 
 create table if not exists video(

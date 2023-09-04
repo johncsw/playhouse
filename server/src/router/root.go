@@ -13,7 +13,7 @@ func NewRootRouter() *chi.Mux {
 	r.Use(ourMiddleware.ErrorHandler)
 	r.Use(ourMiddleware.CORSHandler)
 	r.Use(chiMiddleware.Logger)
-	r.Mount("/session", newSessionRouter())
+	r.Mount("/auth", newAuthRouter())
 	r.Mount("/upload", newUploadRouter())
 	r.Mount("/video", newVideoRouter())
 	return r

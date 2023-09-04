@@ -8,7 +8,7 @@ import (
 )
 
 type RequestBody interface {
-	UploadRegistrationBody | UploadChunkBody
+	UploadRegistrationBody | UploadChunkBody | AuthRegistrationBody
 }
 
 type UnCheckedRequestBody interface {

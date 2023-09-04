@@ -5,6 +5,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"playhouse-server/env"
+	"playhouse-server/model"
 	"playhouse-server/repo"
 	"playhouse-server/response"
 )
@@ -14,9 +15,13 @@ type JWTClaims struct {
 	SessionID int `json:"sessionID"`
 }
 
-func CreateSessionToken() string {
-	sessionRepo := repo.SessionRepo()
-	s := sessionRepo.NewSession()
+func CreateSessionToken(s *model.Session) string {
+	if s == nil {
+		panic(response.Error{
+			Code:  http.StatusInternalServerError,
+			Cause: errors.New("no session to create token for"),
+		})
+	}
 	sessionID := s.ID
 	claims := JWTClaims{
 		SessionID: sessionID,
