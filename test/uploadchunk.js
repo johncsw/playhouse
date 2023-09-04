@@ -14,25 +14,33 @@ const host = config.HOST
 const restAPIURL = `http://${host}`;
 const registerUploadBody = config.TEST_VIDEO_METADATA;
 
+/*
+    * This test is to test flow of uploading a video. Because it's running programmatically, do
+    * check the CORS policy of the server for both restAPI and websocket.
+ */
 export default function () {
-    const sessionToken = TestCreateSession();
+    const sessionToken = TestUserAuthentication();
     const videoID = TestRegisterUpload(sessionToken);
     const {chunkCodes, chunkMaxSize}  = TestGetChunkCodesAndMaxChunkSize(sessionToken, videoID);
     TestUploadChunk(sessionToken, videoID, chunkCodes, chunkMaxSize);
 }
 
-function TestCreateSession() {
-    const createSessionPath = 'session'
+function TestUserAuthentication() {
+    const createSessionPath = 'auth'
     const createSessionURL = `${restAPIURL}/${createSessionPath}`;
     const createSessionParams = {
         headers: {
             'Content-Type': 'application/json',
         },
     };
-    const res = http.post(createSessionURL, JSON.stringify({}), createSessionParams);
+    const createSessionBody = JSON.stringify({
+            email : "someone@mail.com"
+    });
+
+    const res = http.post(createSessionURL, createSessionBody, createSessionParams);
     const sessionToken = res.headers['Authorization']
     check(res, {
-        'create session status was 201': (r) => r.status === 201,
+        'status of authentication result was 201': (r) => r.status === 201,
         'session token was created': () => sessionToken != null && sessionToken.length > 0
     });
     return sessionToken;
@@ -89,9 +97,8 @@ function TestUploadChunk(sessionToken, videoID, chunkCodes, chunkMaxSize) {
     const ws = new WebSocket(webSocketURL);
 
     ws.onopen = () => {
-        console.log('webSocket connection opened');
         check(ws, {
-            'chunk upload was init successfully': () => true
+            'upload was init successfully': () => true
         })
         for (let code of chunkCodes) {
             const size = registerUploadBody['videoSize'];
@@ -118,22 +125,31 @@ function TestUploadChunk(sessionToken, videoID, chunkCodes, chunkMaxSize) {
         }
 
         if (status === "failed") {
-            console.log('WebSocket connection failed', resultStr)
+            check(ws, {
+                'no chunk has issue being uploaded': () => status !== "failed"
+            });
+            console.log('websocket connection failed', resultStr)
         }
 
         if (status === "completed") {
             check(ws, {
                 'all chunk uploads were completed': () => true
             })
-            console.log('WebSocket connection completed', resultStr)
+            console.log('websocket connection completed', resultStr)
         }
     };
 
+
     ws.onerror = (e) => {
-        console.log('WebSocket error: ', e);
+        console.log('websocket connection error:', e)
+        check(e, {
+            'upload ends with no error': () => e == null
+        })
     }
 
     ws.onclose = () => {
-        console.log('WebSocket connection closed');
+        check(ws, {
+            'upload successfully closed': () => true
+        })
     }
 }
