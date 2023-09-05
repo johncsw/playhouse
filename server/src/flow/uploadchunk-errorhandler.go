@@ -36,6 +36,7 @@ func (h *errorHandler) listen() {
 }
 
 func report(support *UploadChunkFlowSupport, err error) {
+	util.LogError(err, "")
 	writeErr := support.WebsocketConn.WriteJSON(response.UploadChunkWebsocketBody{
 		Status:       response.UploadChunkStatusFailed,
 		ErrorMessage: err.Error(),

@@ -1,11 +1,16 @@
 package repo
 
 import (
+	"database/sql"
+	"embed"
 	"fmt"
+	_ "github.com/jackc/pgx/v5"
+	"github.com/pressly/goose/v3"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
 	"playhouse-server/env"
+	"strings"
 )
 
 var (
@@ -31,6 +36,34 @@ func Init() {
 	}
 
 	db = connection
+}
+
+//go:embed schema/*.sql
+var embeddedSQLs embed.FS
+
+func SetUpSchema() {
+	var db *sql.DB
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			panic(closeErr)
+		}
+	}()
+
+	dsn := strings.Replace(env.DSN(), "dbname=playhouse", "dbname=defaultdb", 1)
+	conn, openErr := sql.Open("pgx", dsn)
+	if openErr != nil {
+		panic(openErr)
+	}
+	db = conn
+
+	goose.SetBaseFS(embeddedSQLs)
+	if dialectErr := goose.SetDialect("pgx"); dialectErr != nil {
+		panic(dialectErr)
+	}
+
+	if migrateErr := goose.Up(db, "schema", goose.WithNoVersioning()); migrateErr != nil {
+		panic(migrateErr)
+	}
 }
 
 func NewTransaction(statements func(*gorm.DB) error) error {

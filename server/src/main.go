@@ -9,6 +9,7 @@ import (
 
 func main() {
 	env.Load()
+	repo.SetUpSchema()
 	repo.Init()
 	r := router.NewRootRouter()
 	_ = http.ListenAndServe(":2345", r)
