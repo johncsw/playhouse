@@ -59,3 +59,14 @@ func (r *sessionrepo) IsSessionAvailable(ID int) bool {
 
 	return s.IsAvailable
 }
+
+func (r *sessionrepo) DeleteAll(tx *gorm.DB) error {
+	var executor *gorm.DB
+	if tx == nil {
+		executor = db
+	} else {
+		executor = tx
+	}
+
+	return executor.Where("id > 0").Delete(&model.Session{}).Error
+}

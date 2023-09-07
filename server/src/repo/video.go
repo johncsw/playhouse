@@ -168,3 +168,14 @@ func (r *videorepo) CreateChunkSavingDir(videoID int) (string, error) {
 
 	return urlToStream, nil
 }
+
+func (r *videorepo) DeleteAll(tx *gorm.DB) error {
+	var executor *gorm.DB
+	if tx == nil {
+		executor = db
+	} else {
+		executor = tx
+	}
+
+	return executor.Where("id > 0").Delete(&model.Video{}).Error
+}

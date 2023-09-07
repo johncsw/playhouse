@@ -47,3 +47,14 @@ func (r *userrepo) GetUserByEmail(email string, tx *gorm.DB) (*model.User, error
 	}
 	return &u, nil
 }
+
+func (r *userrepo) DeleteAll(tx *gorm.DB) error {
+	var executor *gorm.DB
+	if tx == nil {
+		executor = db
+	} else {
+		executor = tx
+	}
+
+	return executor.Where("id > 0").Delete(&model.User{}).Error
+}
