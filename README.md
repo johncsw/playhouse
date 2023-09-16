@@ -35,7 +35,7 @@ Playhouse is a side project of mine that can help you build your own video strea
 - `git clone` this project
 - Assume the project directory is named `playhouse` , `cd playhouse` or the name you gave it to the project directory
 - `docker compose up -d`
-- Open your browser with `[localhost:1234](http://localhost:1234)`
+- Open your browser with `http://localhost:1234`
 - Hope you don’t get any error
 - Done
 - If you just want to run the `server` service without docker, then:
