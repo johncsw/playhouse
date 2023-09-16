@@ -21,6 +21,7 @@ window.onload = function() {
                 li.textContent = 'No video uploaded';
                 li.style.color = 'orange';
                 videoList.appendChild(li);
+                return;
             }
 
             for (let i = 0; i < data.length; i++) {

@@ -26,6 +26,7 @@ if (localStorage.getItem(config.SESSION_TOKEN_KEY)) {
             const sessionToken = response.headers.get('Authorization');
             localStorage.setItem(config.SESSION_TOKEN_KEY, sessionToken);
             document.body.innerHTML = config.UPLOAD_HTML_UI;
+            location.reload();
         } catch (error) {
             alert('Error while sending the request, please try it again')
             console.log(error);
