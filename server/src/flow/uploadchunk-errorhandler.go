@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"github.com/gorilla/websocket"
 	"log"
 	"playhouse-server/response"
 	"playhouse-server/util"
@@ -19,7 +20,7 @@ func (h *errorHandler) listen() {
 		// producer finishes first
 		producerErr := <-h.producerErrReceiver
 		if producerErr != nil {
-			log.Printf("Error occurred in upload producer. videoID=%v sessionID=%v err=%v", support.VideoID, support.SessionID, producerErr)
+			log.Printf("error occurred in upload producer. videoID=%v sessionID=%v err=%v", support.VideoID, support.SessionID, producerErr)
 			report(support, producerErr)
 			h.flowSuccessSender <- false
 			return
@@ -35,6 +36,7 @@ func (h *errorHandler) listen() {
 }
 
 func report(support *UploadChunkFlowSupport, err error) {
+	util.LogError(err, "")
 	writeErr := support.WebsocketConn.WriteJSON(response.UploadChunkWebsocketBody{
 		Status:       response.UploadChunkStatusFailed,
 		ErrorMessage: err.Error(),
@@ -42,6 +44,13 @@ func report(support *UploadChunkFlowSupport, err error) {
 	if writeErr != nil {
 		util.LogError(writeErr, "")
 	}
+
+	msgErr := support.WebsocketConn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	if msgErr != nil {
+		util.LogError(msgErr, "")
+		return
+	}
+
 	if closeErr := support.WebsocketConn.Close(); closeErr != nil {
 		util.LogError(closeErr, "")
 	}

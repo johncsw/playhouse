@@ -10,7 +10,7 @@ import (
 
 type chunkProducer struct {
 	uploadChunkSupport *UploadChunkFlowSupport
-	producingQueue     chan<- request.UploadChunkWebsocketBody
+	producingQueue     chan<- *request.UploadChunkWebsocketBody
 }
 
 func (p *chunkProducer) start() <-chan error {
@@ -21,6 +21,7 @@ func (p *chunkProducer) start() <-chan error {
 
 func (p *chunkProducer) produce(producerErrSender chan<- error) {
 	go func() {
+		videoSize := p.uploadChunkSupport.VideoSize
 		defer func() {
 			close(producerErrSender)
 		}()
@@ -64,7 +65,20 @@ func (p *chunkProducer) produce(producerErrSender chan<- error) {
 				return
 			}
 			chunkBody.Content = chunkBin
-			p.producingQueue <- chunkBody
+
+			isNotValidBody := request.IsNotValid(&chunkBody)
+			if isNotValidBody {
+				producerErrSender <- fmt.Errorf("invalid chunk body")
+				return
+			}
+
+			videoSize -= chunkBody.Size
+			if videoSize < 0 {
+				producerErrSender <- fmt.Errorf("video size mismatched. expected=%v", videoSize)
+				return
+			}
+
+			p.producingQueue <- &chunkBody
 			pendingChunks--
 			log.Printf("chunk uploaded. videoID=%v sessionID=%v chunkCode=%v", support.VideoID, support.SessionID, chunkBody.Code)
 		}

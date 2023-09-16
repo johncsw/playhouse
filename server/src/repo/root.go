@@ -1,11 +1,16 @@
 package repo
 
 import (
+	"database/sql"
+	"embed"
 	"fmt"
+	_ "github.com/jackc/pgx/v5"
+	"github.com/pressly/goose/v3"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
 	"playhouse-server/env"
+	"strings"
 )
 
 var (
@@ -25,12 +30,40 @@ func Init() {
 
 	result := connection.Raw("select 1;")
 	if result.Error != nil {
-		panic(fmt.Sprintf("Fail to connect to database: %v", result.Error))
+		panic(fmt.Sprintf("fail to connect to database: %v", result.Error))
 	} else {
-		log.Println("Database connection successful.")
+		log.Println("database connection successful.")
 	}
 
 	db = connection
+}
+
+//go:embed schema/*.sql
+var embeddedSQLs embed.FS
+
+func SetUpSchema() {
+	var db *sql.DB
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			panic(closeErr)
+		}
+	}()
+
+	dsn := strings.Replace(env.DSN(), "dbname=playhouse", "dbname=defaultdb", 1)
+	conn, openErr := sql.Open("pgx", dsn)
+	if openErr != nil {
+		panic(openErr)
+	}
+	db = conn
+
+	goose.SetBaseFS(embeddedSQLs)
+	if dialectErr := goose.SetDialect("pgx"); dialectErr != nil {
+		panic(dialectErr)
+	}
+
+	if migrateErr := goose.Up(db, "schema", goose.WithNoVersioning()); migrateErr != nil {
+		panic(migrateErr)
+	}
 }
 
 func NewTransaction(statements func(*gorm.DB) error) error {
@@ -41,6 +74,7 @@ var (
 	sessionRepo *sessionrepo
 	videoRepo   *videorepo
 	chunkRepo   *chunkrepo
+	userRepo    *userrepo
 )
 
 func SessionRepo() *sessionrepo {
@@ -62,4 +96,11 @@ func ChunkRepo() *chunkrepo {
 		chunkRepo = &chunkrepo{}
 	}
 	return chunkRepo
+}
+
+func UserRepo() *userrepo {
+	if userRepo == nil {
+		userRepo = &userrepo{}
+	}
+	return userRepo
 }

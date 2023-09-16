@@ -14,7 +14,7 @@ type sessionrepo struct {
 	db *gorm.DB
 }
 
-func (r *sessionrepo) NewSession() *model.Session {
+func (r *sessionrepo) NewSession(usrID int) (*model.Session, error) {
 	now := time.Now().UTC()
 	sessionTTLHour := env.SESSION_TTL_HOUR()
 	due := now.Add(time.Hour * time.Duration(sessionTTLHour))
@@ -23,17 +23,11 @@ func (r *sessionrepo) NewSession() *model.Session {
 		IsAvailable: true,
 		DueAt:       &due,
 		CreatedAt:   &now,
+		UserID:      usrID,
 	}
-	result := db.Create(s)
+	err := db.Create(s).Error
 
-	if err := result.Error; err != nil {
-		panic(response.Error{
-			Code:  http.StatusInternalServerError,
-			Cause: err,
-		})
-	}
-
-	return s
+	return s, err
 }
 
 func (r *sessionrepo) IsSessionAvailable(ID int) bool {
@@ -55,7 +49,24 @@ func (r *sessionrepo) IsSessionAvailable(ID int) bool {
 		})
 	}
 
-	isNotDue := s.DueAt.After(time.Now().UTC())
+	isDue := time.Now().UTC().After(*s.DueAt)
+	if isDue {
+		panic(response.Error{
+			Code:  http.StatusForbidden,
+			Cause: errors.New("session expired"),
+		})
+	}
 
-	return isNotDue && s.IsAvailable
+	return s.IsAvailable
+}
+
+func (r *sessionrepo) DeleteAll(tx *gorm.DB) error {
+	var executor *gorm.DB
+	if tx == nil {
+		executor = db
+	} else {
+		executor = tx
+	}
+
+	return executor.Where("id > 0").Delete(&model.Session{}).Error
 }

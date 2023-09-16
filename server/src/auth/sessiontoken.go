@@ -5,6 +5,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"playhouse-server/env"
+	"playhouse-server/model"
 	"playhouse-server/repo"
 	"playhouse-server/response"
 )
@@ -14,9 +15,13 @@ type JWTClaims struct {
 	SessionID int `json:"sessionID"`
 }
 
-func CreateSessionToken() string {
-	sessionRepo := repo.SessionRepo()
-	s := sessionRepo.NewSession()
+func CreateSessionToken(s *model.Session) string {
+	if s == nil {
+		panic(response.Error{
+			Code:  http.StatusInternalServerError,
+			Cause: errors.New("no session to create token for"),
+		})
+	}
 	sessionID := s.ID
 	claims := JWTClaims{
 		SessionID: sessionID,
@@ -37,12 +42,11 @@ func CreateSessionToken() string {
 }
 
 func IsSessionTokenValid(tokenStr string) (bool, int) {
-	authError := response.Error{
-		Code:  http.StatusForbidden,
-		Cause: errors.New("not a valid token"),
-	}
 	if tokenStr == "" {
-		panic(authError)
+		panic(response.Error{
+			Code:  http.StatusForbidden,
+			Cause: errors.New("not a valid token"),
+		})
 	}
 
 	secret := env.JWT_SECRET()
@@ -60,10 +64,13 @@ func IsSessionTokenValid(tokenStr string) (bool, int) {
 
 	if claims, ok := token.Claims.(*JWTClaims); ok && token.Valid {
 		sessionRepo := repo.SessionRepo()
-		isSessionValid := sessionRepo.IsSessionAvailable(claims.SessionID)
-		return isSessionValid, claims.SessionID
+		isAvailable := sessionRepo.IsSessionAvailable(claims.SessionID)
+		return isAvailable, claims.SessionID
 	} else {
-		panic(authError)
+		panic(response.Error{
+			Code:  http.StatusForbidden,
+			Cause: errors.New("token is not available"),
+		})
 	}
 
 	return false, -1

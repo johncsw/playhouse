@@ -3,24 +3,18 @@
 <head>
     <title>Playhouse Video Upload</title>
     <link rel="stylesheet" type="text/css" href="style/app.css">
+    <link rel="stylesheet" type="text/css" href="style/auth.css">
 </head>
 <body>
-    <div id="uploadSection">
-        <h1 id="title">Playhouse Video Upload</h1>
-        <input type="file" id="fileInput" accept="video/*" >
-        <button id="uploadButton" disabled>Upload</button>
-        <p id="fileInfo"></p>
-        <p id="uploadProgress"></p>
-        <p id="uploadStatus"></p>
+    <div id="auth">
+        <h1 id="message">Enter your email</h1>
+        <label for="email"></label><input type="email" id="email" placeholder="Enter your email">
+        <button id="submit">Submit</button>
     </div>
-    <h3 id="videoListHeader">Uploaded Video:</h3>
-    <div id="videoListSection">
-        <ul id = "uploadedVideoList">
-        </ul>
-    </div>
+
     <script src="script/config.js"></script>
+    <script src="script/auth.js"></script>
     <script src="script/select.js"></script>
-    <script src="script/upload-session-init.js"></script>
     <script src="script/upload-register.js"></script>
     <script src="script/upload-get-chunk-code.js"></script>
     <script src="script/upload-send-chunk.js"></script>

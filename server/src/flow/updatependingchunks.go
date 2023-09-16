@@ -8,6 +8,8 @@ import (
 	"playhouse-server/util"
 )
 
+var AllowedUploads int32
+
 func UpdatePendingChunks(videoID int, pendingChunks int) int {
 	newPendingChunks, err := updatePendingChunks(videoID, pendingChunks)
 	if err != nil {

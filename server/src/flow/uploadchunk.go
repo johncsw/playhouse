@@ -12,6 +12,7 @@ type UploadChunkFlowSupport struct {
 	VideoID           int
 	SessionID         int
 	NumsOfChunks      int
+	VideoSize         int
 	ChunkSavingDirURL string
 }
 
@@ -26,7 +27,7 @@ func UploadChunk(support *UploadChunkFlowSupport) <-chan bool {
 
 		support.ChunkSavingDirURL = chunkSavingDirURL
 
-		chunkQueue := make(chan request.UploadChunkWebsocketBody)
+		chunkQueue := make(chan *request.UploadChunkWebsocketBody)
 		// produce chunks by receiving them from websocket
 		producer := chunkProducer{
 			producingQueue:     chunkQueue,

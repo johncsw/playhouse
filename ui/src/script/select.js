@@ -1,9 +1,8 @@
-fileInput.addEventListener('change', function() {
-    const fileInput = document.getElementById('fileInput');
+document.getElementById('fileInput').addEventListener('change', function() {
     const fileInfoText = document.getElementById('fileInfo');
     const uploadButton = document.getElementById('uploadButton');
 
-    const selectedFile = fileInput.files[0];
+    const selectedFile = this.files[0];
 
     if (selectedFile) {
         const fileName = selectedFile.name;

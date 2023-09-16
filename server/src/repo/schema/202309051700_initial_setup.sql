@@ -1,12 +1,19 @@
-
+-- +goose Up
 create database if not exists playhouse;
 use playhouse;
+
+create table if not exists "user" (
+                                      id           serial primary key,
+                                      created_at   timestamp not null default current_timestamp(),
+                                      email string not null check (length(email) > 0)
+);
 
 create table if not exists session(
     id serial primary key,
     is_available bool not null default false,
     due_at timestamp not null,
-    created_at timestamp not null default current_timestamp()
+    created_at timestamp not null default current_timestamp(),
+    user_id int references "user"(id) on delete cascade on update no action
 );
 
 create table if not exists video(

@@ -95,3 +95,14 @@ func (r *chunkrepo) GetNumberUploadedChunks(videoID int, tx *gorm.DB) (int, erro
 	err := executor.Model(&model.Chunk{}).Where("video_id = ? AND is_uploaded = true", videoID).Count(&count).Error
 	return int(count), err
 }
+
+func (r *chunkrepo) DeleteAll(tx *gorm.DB) error {
+	var executor *gorm.DB
+	if tx == nil {
+		executor = db
+	} else {
+		executor = tx
+	}
+
+	return executor.Where("video_id > 0").Delete(&model.Chunk{}).Error
+}
