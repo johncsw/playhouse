@@ -16,10 +16,10 @@ window.onload = function() {
             return response.json();
         })
         .then(data => {
-            if (data.length === 0) {
+            if (data == null || data.length === 0) {
                 const li = document.createElement('li');
                 li.textContent = 'No video uploaded';
-                li.style.color = 'yellow';
+                li.style.color = 'orange';
                 videoList.appendChild(li);
             }
 

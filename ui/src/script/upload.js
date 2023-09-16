@@ -1,7 +1,6 @@
-uploadButton.addEventListener('click', async function () {
+document.getElementById('uploadButton').addEventListener('click', async function () {
     const fileInput = document.getElementById('fileInput');
     const fileInfoText = document.getElementById('fileInfo');
-    const uploadButton = document.getElementById('uploadButton');
     const uploadProgressText = document.getElementById('uploadProgress');
 
     const selectedFile = fileInput.files[0];
@@ -9,12 +8,13 @@ uploadButton.addEventListener('click', async function () {
     if (selectedFile) {
         uploadProgressText.textContent = 'Waiting...';
         fileInput.disabled = true;
-        uploadButton.disabled = true;
+        this.disabled = true;
 
         let sessionToken = config.SESSION_TOKEN
         if (!sessionToken) {
-            sessionToken = await initializeSession(updatePageForUploadFailure)
+            alert('Please sign up first');
         }
+
         let videoID = config.UPLOADING_VIDEO_ID
         if (!videoID) {
             videoID = await getVideoIDByUploadRegistration(selectedFile, sessionToken, updatePageForUploadFailure)

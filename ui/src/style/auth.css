@@ -1,0 +1,28 @@
+body, html {
+    height: 100%;
+    margin: 0;
+}
+
+#auth {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    border: 2px solid #000;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+#email {
+    padding: 10px;
+    margin-top: 10px;
+}
+
+#submit {
+    padding: 10px;
+    margin-top: 10px;
+}
