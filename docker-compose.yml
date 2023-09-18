@@ -6,7 +6,7 @@ services:
     ports:
       - 1234:80
     volumes:
-      - /Users/john/IdeaProjects/playhouse/ui/src:/usr/share/nginx/html/
+      - {{your path to the project}}/playhouse/ui/src:/usr/share/nginx/html/
     networks:
       - playhouse-net
 
@@ -17,7 +17,7 @@ services:
     ports:
       - 2345:2345
     volumes:
-      - /Users/john/IdeaProjects/playhouse/server/db/chunks:/app/chunks
+      - {{your path to the project}}/playhouse/server/db/chunks:/app/chunks
     networks:
       - playhouse-net
     depends_on:
@@ -29,7 +29,7 @@ services:
     image: cockroachdb/cockroach
     command: start-single-node --advertise-addr 'localhost' --insecure
     volumes:
-      - /Users/john/IdeaProjects/playhouse/server/db/data:/cockroach/cockroach-data
+      - {{your path to the project}}/playhouse/server/db/data:/cockroach/cockroach-data
     ports:
       - 3456:26257
       - 34561:8080
