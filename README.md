@@ -34,6 +34,7 @@ Playhouse is a side project of mine that can help you build your own video strea
 - Install [Docker](https://docs.docker.com/desktop/) if you don’t have it.
 - `git clone` this project
 - Assume the project directory is named `playhouse` , `cd playhouse` or the name you gave it to the project directory
+- Change `{{your path to the project directory}}` in `./docker-compose.yml` to your path to the project directory
 - `docker compose up -d`, **wait 30 seconds for services running up**, as the `server` service will ping the `db` service for healthy state every 30 seconds. 
 - Open your browser with `http://localhost:1234`
 - Hope you don’t get any error
